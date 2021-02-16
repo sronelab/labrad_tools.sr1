@@ -1,6 +1,11 @@
 from sequencer.devices.yesr_sequencer_board.exceptions import TimeOutOfBoundsError
 
 def time_to_ticks(clk, time):
+
+    print('Debugging yesr_sequencer_board')
+    print('time handed in:')
+    print(time)
+
     ticks = int(round(clk * time))
     if (ticks <= 0) or (ticks > 2**32 - 1):
         raise TimeOutOfBoundsError(time, ticks, clk)

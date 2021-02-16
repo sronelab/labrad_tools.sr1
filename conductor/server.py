@@ -102,6 +102,7 @@ class ConductorServer(ThreadedServer):
     experiment_queue = deque([])
     parameter_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, 'parameters/')
     experiment_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, '.experiments/')
+
     is_advancing = False
     verbose = False
 
@@ -502,6 +503,8 @@ class ConductorServer(ThreadedServer):
             (str) json dumped dict 
                 {<(str) parameter_name>: <set_value_response>}
         """
+
+
         request = json.loads(request_json)
         response = self._set_parameter_values(request)
         self._send_update({'set_parameter_values': response})
@@ -517,6 +520,7 @@ class ConductorServer(ThreadedServer):
             (dict) {<(str) parameter_name>: <set_value_response>}
         """
         response = {}
+
         for parameter_name, parameter_value in request.items():
             parameter_response = self._set_parameter_value(parameter_name, parameter_value)
             response.update({parameter_name: parameter_response})

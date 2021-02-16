@@ -1,6 +1,9 @@
 from sequencer.devices.yesr_digital_board.exceptions import TimeOutOfBoundsError
 
 def time_to_ticks(clk, time):
+    print('Time testing in hepper.py sequencer')
+    print(time)
+
     ticks = int(round(clk * time))
     if (ticks <= 0) or (ticks > 2**32 - 1):
         raise TimeOutOfBoundsError(time, ticks, clk)
