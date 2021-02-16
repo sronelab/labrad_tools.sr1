@@ -5,3 +5,4 @@ class ChannelNotFound(Exception):
         traceback.print_exc()
         message = '{}'.format(channel_id)
         super(ChannelNotFound, self).__init__(message)
+

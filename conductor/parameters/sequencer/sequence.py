@@ -13,17 +13,17 @@ class Sequence(ConductorParameter):
     autostart = True
     priority = 10
     value_type = 'list'
-    value = ['all_off'] * 1
+    value = ['dynamic_blues'] * 1
 
     loop = True
     call_in_thread = False
     #call_in_thread = True
 
-    ok_master_servername = 'appa_ok'
-    ok_master_interfacename = '2047000UVN'
+    ok_master_servername = 'yeelmo_ok'
+    ok_master_interfacename = '1541000D3S'
 
     sequencer_servername = 'sequencer'
-    sequencer_devices = ['abcd', 'e']
+    sequencer_devices = ['abcd', 'e','f']
     sequencer_master_device = 'abcd'
     
     def initialize(self, config):

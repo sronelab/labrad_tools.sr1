@@ -1,25 +1,27 @@
+import sequencer.devices.yesr_analog_board.device
+reload(sequencer.devices.yesr_analog_board.device)
+import sequencer.devices.yesr_analog_board.channel
+reload(sequencer.devices.yesr_analog_board.channel)
 from sequencer.devices.yesr_analog_board.device import YeSrAnalogBoard
 from sequencer.devices.yesr_analog_board.channel import YeSrAnalogChannel
 
-class E(YeSrAnalogBoard):
-    autostart = True
-    
+class BoardE(YeSrAnalogBoard):
     conductor_servername = 'conductor'
-    ok_servername = 'appa_ok'
-    ok_interface = '1401000AT3'
-    
-    is_master = False
+    ok_servername = 'yeelmo_ok'
+    ok_interface = '1744000K2I'
+    sequence_directory = "/home/srgang/J/sequences/{}/"
 
+    autostart = True
+    is_master = True
     channels = [
-        YeSrAnalogChannel(loc=0, name='Alpha Intensity', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=1, name='Beta Intensity', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=2, name='X Comp. Coil', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=3, name='Y Comp. Coil', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=4, name='Z Comp. Coil', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=5, name='MOT Coil', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=6, name='HODT Intensity', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=7, name='VODT Intensity', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=0, name='MOT Ramp', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=1, name='813 Intensity', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=2, name='X-bias', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=3, name='Y-bias', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=4, name='Z-bias', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=5, name='DC Stark A', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=6, name='DC Stark B', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=7, name='DC Stark C', mode='auto', manual_output=0.0),
         ]
 
-
-Device = E
+Device = BoardE

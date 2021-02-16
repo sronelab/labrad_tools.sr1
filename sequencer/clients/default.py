@@ -276,6 +276,7 @@ class SequencerClient(QtGui.QWidget):
         self.loadAndSave.locationBox.setText(filepath)
 
     def browse(self):
+        pass
         timestr = time.strftime(self.time_format)
         directory = self.sequence_directory.format(timestr)
         if not os.path.exists(directory):
