@@ -105,6 +105,8 @@ class BluePMT(Picoscope):
         tot_fit = tot_sum
         frac_fit = frac_sum
 
+
+
         processed_data = {
             'frac_sum': frac_sum,
             'tot_sum': tot_sum,

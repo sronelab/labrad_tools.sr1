@@ -189,9 +189,9 @@ class PMTViewerNumeric(PMTViewer):
             self.canvas.ax.plot(exc, label='exc')
             self.canvas.ax.plot(bac, label='bac')
             self.canvas.ax.legend()
-            gnd = np.mean(h5f['gnd'][3000:23000])
-            exc = np.mean(h5f['exc'][3000:23000])
-            bac = np.mean(h5f['bac'][3000:23000])
+            gnd = np.mean(h5f['gnd'][300:])
+            exc = np.mean(h5f['exc'][300:])
+            bac = np.mean(h5f['bac'][300:])
             tot = (gnd+exc-2*bac)
             if tot==0:
                 frac = 0
