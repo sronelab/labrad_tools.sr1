@@ -13,15 +13,18 @@ class ParameterRow(QtGui.QWidget):
         QtGui.QDialog.__init__(self)
         self.boxWidth = parent.boxWidth
         self.boxHeight = parent.boxHeight
+        self.boxName = parent.boxName
         self.populateGUI()
 
     def loadControlConfiguration(self, configuration):
         for key, value in configuration.__dict__.items():
+            print(value)
             setattr(self, key, value)
-    
+
     def populateGUI(self):
         self.nameBox = QtGui.QLineEdit()
         self.nameBox.setFixedSize(self.boxWidth, self.boxHeight)
+        self.nameBox.setText(self.boxName)
         self.valueBox = NeatSpinBox()
         self.valueBox.setFixedSize(self.boxWidth, self.boxHeight)
 
@@ -57,8 +60,21 @@ class ParameterValuesClient(QtGui.QGroupBox):
             self.setDisabled(True)
 
     def populateGUI(self):
-        self.parameterRows = [ParameterRow(self) 
-                for i in range(self.numRows)]
+        # Preloading some of the rows with commonly used parameter values
+        preloadNames = ['Z_zero', 'Z_mot', 'Y_zero', 'Y_mot', 'X_zero', 'X_mot', 'X_pol', 'X_bias', 'T_blue', 'T_rabi']
+        names = ['sequencer.'+name for name in preloadNames] # adding 'sequencer.' to each
+        names += ['']*(self.numRows-len(preloadNames)) # padding the list to be the same length as the number of rows displayed
+        self.parameterRows = []
+        for i in range(self.numRows):
+            if names[i] is not None:
+                self.boxName = names[i]
+                self.parameterRows.append(ParameterRow(self))
+            else:
+                self.boxName = None
+                self.parameterRows.append(ParameterRow(self))
+        # old code for loading all blank boxes
+        #self.parameterRows = [ParameterRow(self)
+        #        for i in range(self.numRows)]
 
         self.layout = QtGui.QVBoxLayout()
         for pr in self.parameterRows:
