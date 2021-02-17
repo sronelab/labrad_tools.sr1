@@ -1,6 +1,7 @@
 from collections import deque
 from labrad import connect
 import traceback
+import os
 
 from conductor.exceptions import ParameterInitializationError
 from conductor.exceptions import ParameterTerminationError
@@ -73,9 +74,14 @@ class ConductorParameter(object):
             traceback.print_exc()
             raise ParameterTerminationError(self.name)
 
-    def connect_to_labrad(self):
+#    def connect_to_labrad(self):
+#        connection_name = '{} - {}'.format(self.servername, self.name)
+#        self.cxn = connect(name=connection_name)
+
+
+    def connect_to_labrad(self, host=os.getenv("LABRADHOST"),password = os.getenv("LABRADPASSWORD") ):
         connection_name = '{} - {}'.format(self.servername, self.name)
-        self.cxn = connect(name=connection_name)
+        self.cxn = connect(name=connection_name, host=host, password=password)
 
     def set_value(self, value):    
         """ set value, and value_queue if we want to scan parameter value """
