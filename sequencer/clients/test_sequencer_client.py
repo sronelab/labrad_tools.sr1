@@ -1,9 +1,11 @@
 from sequencer.clients.sequencer_control import SequencerClient
+import os
+
 
 class TestClient(SequencerClient):
     conductor_servername = 'conductor'
     sequencer_servername = 'sequencer'
-    sequence_directory = PROJECT_DATA_PATH+'sequences/{}/'
+    sequence_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'sequences/{}/')
     master_channel = 'Trigger@D15'
     timing_channel = 'Trigger@D15'
 
