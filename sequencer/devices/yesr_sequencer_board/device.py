@@ -162,7 +162,7 @@ class YeSrSequencerBoard(DefaultDevice):
                 subsequence.update({channel.key: channel_subsequence})
 
             subsequence_keys = sorted(subsequence.keys(), key=lambda x: x.split('@')[-1])
-            self.save_sequence(subsequence, subsequence_name, False)
+            self.save_sequence(subsequence, subsequence_name, True)
     
     def combine_subsequences(self, subsequence_list):
         combined_sequence = {}
