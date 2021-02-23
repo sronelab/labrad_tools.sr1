@@ -14,7 +14,9 @@ class HrFrequencyMF(ConductorParameter,DG4000):
 
 
     def update(self):
+
         if self.value is not None:
             self.frequency = self.value
+
 
 Parameter = HrFrequencyMF

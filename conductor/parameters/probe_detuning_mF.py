@@ -11,8 +11,8 @@ class ProbeDetuningMF(ConductorParameter):
 #Normally must initialize for first shot
 #    def initialize(self,config):
 
-    autostart = False 
     priority = 4
+    autostart = False
 
 
     def update(self):
@@ -37,14 +37,13 @@ class ProbeDetuningMF(ConductorParameter):
 
             print "f_fnc_mF: %f"%f_fnc
             print "f_steer_mF: %f"%f_steer
+
             request = {
-                    'clock_aom.hr_frequency_mF': float(f_steer), 
+                    'clock_mF.hr_frequency_mF': float(f_steer), 
                     'clock_mF.hr_demod_frequency_mF': float(f_fnc),
                     }
             self.server._set_parameter_values(request)
 
-
-            self.frequency = self.value
 
 
 
