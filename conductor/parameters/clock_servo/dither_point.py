@@ -52,12 +52,15 @@ class DitherPoint(ConductorParameter):
             return self.locks[lock]
 
     def update(self):
+
+        print('Dither update called')
         if self.value is not None:
             name, side = self.value
+
             # these conditions are for ramsey echo pulses interleaved with locking pulses
             # we assume two locks, a '-9/2a' and '+9/2a' lock and '+/-9/2follow' locks which
             # have no servo feedback but just sit atop the line and executes echo pulses
-            if name == '-9/2follow':
+            if name == '-9/2follow': 
                 ditherer = self._get_lock(name)
                 ditherer.side = side
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
@@ -76,7 +79,7 @@ class DitherPoint(ConductorParameter):
                 print("-9/2 echo probe frequency: " + str(output))
 
 
-            elif name == '+9/2follow':
+            elif name == '+9/2follow': 
                 ditherer = self._get_lock(name)
                 ditherer.side = side
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
@@ -96,10 +99,17 @@ class DitherPoint(ConductorParameter):
 
 
             else:
+
+                print('1')
                 ditherer = self._get_lock(name)
+                print('2')
                 ditherer.side = side
+                print('3')
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
+                print('4') 
                 self.server._set_parameter_values(request)
+
+                print('Part way into else')
                 
                 control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock(name)
                 output = control_loop.output + ditherer.output

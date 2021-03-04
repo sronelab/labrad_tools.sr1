@@ -32,8 +32,8 @@ class ProbeDetuningMF(ConductorParameter):
 
             #correcting for mF path. We take +1 order of f steer aftering going through -1 order 
             #of 100 MHz aom
-            f_fnc += (100.e6-f_steer)*2.
-            f_steer =  100.e6-f_steer
+#            f_fnc += (100.e6-f_steer)*2.
+#            f_steer =  100.e6-f_steer
 
             print "f_fnc_mF: %f"%f_fnc
             print "f_steer_mF: %f"%f_steer
