@@ -109,8 +109,6 @@ class DitherPoint(ConductorParameter):
                 print('4') 
                 self.server._set_parameter_values(request)
 
-                print('Part way into else')
-                
                 control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock(name)
                 output = control_loop.output + ditherer.output
                 control_loop.pmt_shot_number = self.server.experiment.get('shot_number')

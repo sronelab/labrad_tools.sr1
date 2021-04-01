@@ -1,28 +1,17 @@
+
 import json
 import time
 import os
 import traceback
 
-from twisted.internet.defer import inlineCallbacks
-
 from conductor.parameter import ConductorParameter
-
-
-import sys
-sys.path.append('/home/srgang/Password/')
-from srq_password import password as srqPassword
+import vxi11
 
 class SiDemod(ConductorParameter):
     priority = 6
     autostart = False
-    def initialize(self,config):
- 
-       #Connect to stable lasers demod server on Sr2 network
-        self.connect_to_labrad(host =  'yesr10.colorado.edu', password = srqPassword)
-
-
-        #We create an attribute for settings used in demod. This will enable us to toggle on/off make believe dedrifter
-        self.settings = [] #json.loads(value)
+    def initialize(self, config):
+        self.inst = vxi11.Instrument('128.138.107.33')
 
     def update(self):
 
@@ -41,7 +30,9 @@ class SiDemod(ConductorParameter):
 
 
         else: #If we aren't dedriting (normal comb operation), then just grab demod value!
-            self.value = self.cxn.si_demod.get_frequency()
+             response = self.inst.ask('SOUR1:FREQ?')
+             self.inst.local()
+             self.value = 8 * float(response)
 
         print('Demod freq: ' + str(self.value))
 
