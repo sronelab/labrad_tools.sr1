@@ -53,7 +53,6 @@ class DitherPoint(ConductorParameter):
 
     def update(self):
 
-        print('Dither update called')
         if self.value is not None:
             name, side = self.value
 
@@ -100,13 +99,9 @@ class DitherPoint(ConductorParameter):
 
             else:
 
-                print('1')
                 ditherer = self._get_lock(name)
-                print('2')
                 ditherer.side = side
-                print('3')
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
-                print('4') 
                 self.server._set_parameter_values(request)
 
                 control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock(name)
