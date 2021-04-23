@@ -18,18 +18,25 @@ class ProbeDetuningMF(ConductorParameter):
     def update(self):
 
 
+        print('probe detuning mF update called')
+
         if self.value is not None:
 
             request = {'si_demod': {}} 
             mjm_comb_demod = self.server._get_parameter_values(request, all=False)['si_demod']
 
+            mF_value = self.value
+
+
             #If we threw a -1 we want to update mF to follow the dithers.
-            if self.value == -1:
+            if mF_value  == -1:
+                print('-1 thrown in probe detunings')
                 request = {'clock_servo.control_signals.+9/2':{},'clock_servo.control_signals.-9/2':{}}
                 temporary_data = self.server._get_parameter_values(request, all=False)
                 f_minus = temporary_data['clock_servo.control_signals.-9/2']
                 f_plus = temporary_data['clock_servo.control_signals.+9/2']
-                self.value = (f_minus+f_plus)/2.
+                print(f_minus,f_plus)
+                mF_value = (f_minus+f_plus)/2.
 
 
 
@@ -38,7 +45,7 @@ class ProbeDetuningMF(ConductorParameter):
             SL_FNC_table_AOM = 30.0e6
             SL_FNC_comb = 95.520e6 + 2*SL_FNC_table_AOM # updated as of 2021-04-15
 
-            f_fnc = 2.0*(-1.0*float(self.value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
+            f_fnc = 2.0*(-1.0*float(mF_value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
             f_steer = f_fnc/2.0 - f_vco
 
             #correcting for mF path. We take +1 order of f steer aftering going through -1 order 
