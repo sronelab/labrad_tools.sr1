@@ -34,7 +34,7 @@ class BoardABCD(YeSrDigitalBoard):
         YeSrDigitalChannel(loc=['B', 2], name='9/2 AOM', mode='auto', manual_output=False, invert=True),
         YeSrDigitalChannel(loc=['B', 3], name='Red Int SW', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['B', 4], name='Blue x-MOT arm shutter', mode='auto', manual_output=False, invert=False),
-        YeSrDigitalChannel(loc=['B', 5], name='NCB5', mode='auto', manual_output=False, invert=False),
+        YeSrDigitalChannel(loc=['B', 5], name='BB Modulation', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['B', 6], name='Polarizing AOM', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['B', 7], name='Clock RF TTL', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['B', 8], name='Polarizing shutter', mode='auto', manual_output=False, invert=False),
