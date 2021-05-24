@@ -6,7 +6,7 @@ import time
 
 from device_server.device import DefaultDevice
 from sequencer.devices.yesr_sequencer_board.helpers import time_to_ticks
-#from sequencer.devices.yesr_sequencer_board.helpers import combine_sequences
+from sequencer.devices.yesr_sequencer_board.helpers import combine_sequences
 from ok_server.proxy import OKProxy
 
 
@@ -25,7 +25,7 @@ class YeSrSequencerBoard(DefaultDevice):
     sequence_pipe = 0x80
     clk = 50e6 # [Hz]
     
-    sequence_directory = '/home/srgang/J/data/sequences/{}/'
+    sequence_directory = None #Now specified in experiment specific device files
     subsequence_names = None
     sequence = None
     raw_sequene = None
@@ -64,12 +64,11 @@ class YeSrSequencerBoard(DefaultDevice):
         for i in range(365):
             day = date.today() - timedelta(i)
             sequencepath = self.sequence_directory.format(day.strftime('%Y%m%d')) + sequencename
+	    print sequencepath
             if os.path.exists(sequencepath):
                 break
         if not os.path.exists(sequencepath):
-            print(date.today())
-            print(sequencename)
-            raise Exception(sequencepath)
+            raise SequenceNotFoundError(sequence_name)
         
         with open(sequencepath, 'r') as infile:
             sequence = json.load(infile)
@@ -77,6 +76,7 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def save_sequence(self, sequence, sequence_name, tmpdir=True):
         sequence_directory = self.sequence_directory.format(time.strftime('%Y%m%d'))
+	print sequence_directory
         if tmpdir:
             sequence_directory = os.path.join(sequence_directory, '.tmp')
         if not os.path.exists(sequence_directory):
@@ -109,30 +109,25 @@ class YeSrSequencerBoard(DefaultDevice):
             raise ChannelNotFound(channel_id)
         return channel
     
-    def match_sequence_key(self, subsequence, channel):
-        subsequence_keys = subsequence.keys()
+    def match_sequence_key(self, channel_sequences, channel_key):
+        channel_nameloc = channel_key.split('@') + ['']
+        channel_name = channel_nameloc[0]
+        channel_loc = channel_nameloc[1]
 
-        for key in subsequence_keys:
-            if key == channel.key:
-                return key 
+        for sequence_key, sequence in channel_sequences.items():
+            sequence_nameloc = sequence_key.split('@') + ['']
+            if sequence_nameloc == channel_nameloc:
+                return sequence_key
 
-        for alt_key in channel.alt_keys:
-            print alt_key
-            for key in subsequence_keys:
-                if key == alt_key:
-                    return key
-        
-        subsequence_names = [key.split('@')[0] for key in subsequence.keys()]
-        channel_name = channel.key.split('@')[0]
-        for key, name in zip(subsequence_keys, subsequence_names):
-            if name == channel_name:
-                return key 
-        
-        subsequence_locs = [(key.split('@') + [''])[1] for key in subsequence.keys()]
-        channel_loc = (channel.key.split('@')+ [''])[1]
-        for key, loc in zip(subsequence_keys, subsequence_locs):
-            if loc == channel_loc:
-                return key 
+        for sequence_key, sequence in channel_sequences.items():
+            sequence_name = (sequence_key.split('@') + [''])[0]
+            if sequence_name == channel_name:
+                return sequence_key
+
+        for sequence_key, sequence in channel_sequences.items():
+            sequence_loc = (sequence_key.split('@') + [''])[1]
+            if sequence_loc == channel_loc:
+                return sequence_key
 
     def update_channel_modes(self):
         """ to be implemented by child class """
@@ -144,43 +139,27 @@ class YeSrSequencerBoard(DefaultDevice):
         """ to be implemented by child class """
 
 
-    def fix_sequence_keys(self, subsequence_names):
+    def fix_sequence_keys(self, subsequence_names, tmpdir):
         for subsequence_name in set(subsequence_names):
             subsequence = self.load_sequence(subsequence_name)
-            master_channel_subsequence = subsequence[self.master_channel]
-            
+            master_subsequence = subsequence[self.master_channel]
             for channel in self.channels:
-                channel_subsequence = []
-                matched_key = self.match_sequence_key(subsequence, channel)
+                channel_subsequence = None
+                matched_key = self.match_sequence_key(subsequence, channel.key)
                 if matched_key:
                     channel_subsequence = subsequence.pop(matched_key)
                 if not channel_subsequence:
                     channel_subsequence = [
                         self.default_sequence_segment(channel, s['dt'])
-                            for s in master_channel_subsequence
+                            for s in master_subsequence
                         ]
                 subsequence.update({channel.key: channel_subsequence})
 
-            subsequence_keys = sorted(subsequence.keys(), key=lambda x: x.split('@')[-1])
-            self.save_sequence(subsequence, subsequence_name, True)
+            self.save_sequence(subsequence, subsequence_name, tmpdir)
     
-    def combine_subsequences(self, subsequence_list):
-        combined_sequence = {}
-        for channel in self.channels:
-            channel_sequence = []
-            for subsequence in subsequence_list:
-                channel_sequence += subsequence[channel.key]
-            combined_sequence[channel.key] = channel_sequence
-        return combined_sequence
     
     def set_sequence(self, subsequence_names):
-        try:
-            self._set_sequence(subsequence_names)
-        except:
-            self.fix_sequence_keys(subsequence_names)
-            self._set_sequence(subsequence_names)
-
-    def _set_sequence(self, subsequence_names):
+        self.fix_sequence_keys(subsequence_names, False)
         self.subsequence_names = subsequence_names
         
         subsequence_list = []
@@ -188,7 +167,7 @@ class YeSrSequencerBoard(DefaultDevice):
             subsequence = self.load_sequence(subsequence_name)
             subsequence_list.append(subsequence)
 
-        raw_sequence = self.combine_subsequences(subsequence_list)
+        raw_sequence = combine_sequences(subsequence_list)
         self.set_raw_sequence(raw_sequence)
 
     def get_sequence(self):
@@ -232,6 +211,7 @@ class YeSrSequencerBoard(DefaultDevice):
                 parameter_name.replace('*', 'sequencer.'): None
                     for parameter_name in parameter_names
                 }
+            print request
             conductor_server = self.cxn[self.conductor_servername]
             parameter_values_json = conductor_server.get_next_parameter_values(json.dumps(request))
             parameter_values = json.loads(parameter_values_json)

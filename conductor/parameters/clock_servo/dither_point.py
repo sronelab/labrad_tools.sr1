@@ -59,13 +59,13 @@ class DitherPoint(ConductorParameter):
             # these conditions are for ramsey echo pulses interleaved with locking pulses
             # we assume two locks, a '-9/2a' and '+9/2a' lock and '+/-9/2follow' locks which
             # have no servo feedback but just sit atop the line and executes echo pulses
-            if name == '-9/2follow': 
+            if name == '-9/2scan': 
                 ditherer = self._get_lock(name)
                 ditherer.side = side
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
                 self.server._set_parameter_values(request)
                 
-                control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock('-9/2a')
+                control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock('-9/2')
                 output = control_loop.output + ditherer.output
                 control_loop.pmt_shot_number = self.server.experiment.get('shot_number')
                 
@@ -75,16 +75,16 @@ class DitherPoint(ConductorParameter):
                 request = {parameter_name: output 
                         for parameter_name in ditherer.control_parameters}
                 self.server._set_parameter_values(request)
-                print("-9/2 echo probe frequency: " + str(output))
+                print("-9/2 scan probe frequency: " + str(output))
 
 
-            elif name == '+9/2follow': 
+            elif name == '+9/2scan': 
                 ditherer = self._get_lock(name)
                 ditherer.side = side
                 request = {'clock_servo.dithers.{}'.format(name): ditherer.output}
                 self.server._set_parameter_values(request)
                 
-                control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock('+9/2a')
+                control_loop = self.server._get_parameter('clock_servo.feedback_point')._get_lock('+9/2')
                 output = control_loop.output + ditherer.output
                 control_loop.pmt_shot_number = self.server.experiment.get('shot_number')
 
@@ -94,7 +94,7 @@ class DitherPoint(ConductorParameter):
                 request = {parameter_name: output 
                         for parameter_name in ditherer.control_parameters}
                 self.server._set_parameter_values(request)
-                print("+9/2 echo probe frequency: " + str(output))
+                print("+9/2 scan probe frequency: " + str(output))
 
 
             else:

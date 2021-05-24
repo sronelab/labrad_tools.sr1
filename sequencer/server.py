@@ -166,11 +166,14 @@ class SequencerServer(DeviceServer):
     
     @setting(14)
     def sequence(self, c, request_json='{}'):
-        """ sequence at this point must be list of strings """
-        request = json.loads(request_json)
-        response = self._sequence(request)
-        response_json = json.dumps(response)
-        return response_json
+        #try:
+            """ sequence at this point must be list of strings """
+            request = json.loads(request_json)
+            response = self._sequence(request)
+            response_json = json.dumps(response)
+            return response_json
+       # except:
+        #    print('Issue with sequence!!')
 
     def _sequence(self, request={}):
         if request == {}:
