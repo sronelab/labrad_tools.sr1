@@ -22,7 +22,10 @@ class Recorder(ConductorParameter):
 	'lattice_unpolarized',
 	'readout_pmt',
 	'readout_pmt_HV1',
-	'readout_pmt_HV2'
+	'readout_pmt_HV2',
+	'readout_pmtTRIG',
+	'coherent_readout_pmt',
+	'readout_pmt_comparison',
         ]
 
     def initialize(self, config):

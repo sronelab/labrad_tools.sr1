@@ -12,7 +12,7 @@ class BoardF(YeSrAnalogBoard):
     sequence_directory = "/home/srgang/J/sequences/{}/"
 
     autostart = True
-    is_master = True
+    is_master = False #was true on 05/06/2022
 
     channels = [
         YeSrAnalogChannel(loc=0, name='DC Stark D', mode='auto', manual_output=0.0),
@@ -22,7 +22,7 @@ class BoardF(YeSrAnalogBoard):
         YeSrAnalogChannel(loc=4, name='Fixed 813 setpoint -540mV', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=5, name='9/2 FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=6, name='11/2 FM', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=7, name='ANC13', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=7, name='Z-bias bottom', mode='auto', manual_output=0.0),
         ]
 
 

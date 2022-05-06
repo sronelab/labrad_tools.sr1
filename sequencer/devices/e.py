@@ -12,13 +12,13 @@ class BoardE(YeSrAnalogBoard):
     sequence_directory = "/home/srgang/J/sequences/{}/"
 
     autostart = True
-    is_master = True
+    is_master = False #was True, 05/06/2022
     channels = [
         YeSrAnalogChannel(loc=0, name='MOT Ramp', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=1, name='813 Intensity', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=2, name='X-bias', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=3, name='Y-bias', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=4, name='Z-bias', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=4, name='Z-bias top', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=5, name='DC Stark A', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=6, name='DC Stark B', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=7, name='DC Stark C', mode='auto', manual_output=0.0),
