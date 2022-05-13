@@ -9,15 +9,19 @@ from conductor.parameter import ConductorParameter
 from andor_server.proxy import AndorProxy
 
 class RecordPath(ConductorParameter):
-    autostart = False
+    autostart = True
     priority = 1
     record_types = {
         "image": "absorption", # Sr2 legacy
         "readout_pmt":"fluorescence"
         }
+    record_sequences = [
+        'readout_pmt',
+        ]
 
-    data_filename = '{}.ikon.hdf5'
-    nondata_filename = '{}/ikon.hdf5'
+
+    data_filename = '{}.andor.txt'
+    nondata_filename = '{}/andor.txt'
 
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
     compression = 'gzip'
@@ -34,42 +38,37 @@ class RecordPath(ConductorParameter):
         andor.SetTemperature(-70)
         andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
         andor.CoolerON()
-
-        # Acquisition settings
-        andor.SetPreAmpGain(2)
-        andor.SetEMGainMode(0)
-        andor.SetEMCCDGain(50)
-        andor.SetOutputAmplifier(0)
-        andor.SetExposureTime(0.001)
-        andor.SetShutter(1, 1, 0, 0) # open shutter
-        andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(290, 100) 
-        andor.SetHSSpeed(0, 0)
-        andor.SetVSSpeed(1)
-        andor.SetTriggerMode(1) #external
-        andor.SetAcquisitionMode(3)
-        andor.SetNumberKinetics(3)
-        andor.SetBaselineClamp(0)
         
-        # Print settings
-        print('Camera temp is (C): ' + str(andor.GetTemperature()))
-        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
-        print('PreAmp gain: ' + str(andor.GetPreAmpGain()))
-        print('PreAmp gain: ' + str(andor.GetVSSpeed()))
-
         self._andor = andor
     
     @property
     def value(self):
+        # Copying some of the blue_pmt.recorder.
         experiment_name = self.server.experiment.get('name')
         shot_number = self.server.experiment.get('shot_number')
+        sequence = self.server.parameters.get('sequencer.sequence')
+        previous_sequence = self.server.parameters.get('sequencer.previous_sequence')
 
-        rel_point_path = None
-        if (experiment_name is not None):
+        value = None
+        if (experiment_name is not None) and (sequence is not None):
             point_filename = self.data_filename.format(shot_number)
-            return os.path.join(experiment_name, point_filename)
-        else:
-            return self.nondata_filename.format(time.strftime('%Y%m%d'))
+            rel_point_path = os.path.join(experiment_name, point_filename)
+        elif sequence is not None:
+            rel_point_path = self.nondata_filename.format(time.strftime('%Y%m%d'))
+            
+        if sequence.loop:
+            if np.intersect1d(previous_sequence.value, self.record_sequences):
+                value = rel_point_path
+        elif np.intersect1d(sequence.value, self.record_sequences):
+            value = rel_point_path
+        
+        return value
+
+        
+    @value.setter
+    def value(self, x):
+        pass
+
 
     def update(self):
         sequence = self.server.parameters.get('sequencer.sequence')
@@ -98,6 +97,23 @@ class RecordPath(ConductorParameter):
         Take flourescence imaging. """
         andor = self._andor
         andor.AbortAcquisition()
+        # Acquisition settings
+        andor.SetOutputAmplifier(0)
+        andor.SetEMGainMode(2) # Linear gain mode.
+        andor.SetEMCCDGain(50)
+        andor.SetExposureTime(0.001)
+        andor.SetShutter(1, 1, 0, 0) # open shutter
+        andor.SetReadMode(3) # single track mode
+        andor.SetSingleTrack(290, 100) 
+        andor.SetHSSpeed(0, 0)
+        andor.SetVSSpeed(1)
+        andor.SetTriggerMode(1) #external
+        andor.SetAcquisitionMode(3)
+        andor.SetNumberKinetics(3)
+        andor.SetBaselineClamp(0)
+        andor.SetPreAmpGain(2)
+
+
         # Start acquisition and get images
         andor.StartAcquisition()
         andor.WaitForAcquisition()
@@ -121,48 +137,59 @@ class RecordPath(ConductorParameter):
             file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
             file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
 
+        # overwrite data for live plot
+        dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.txt")
+        with open(dummy_data_path, 'w') as file:
+            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
+            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
+            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
+
         print(data_path)
+        print('Camera temp is (C): ' + str(andor.GetTemperature()))
+        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
+        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+
 
 
     def take_absorption_image(self):
-        # Sr2 legacy
+        # # Sr2 legacy
         andor = self._andor
         
         andor.AbortAcquisition()
-        andor.SetAcquisitionMode(3)
-        andor.SetReadMode(4)
-        andor.SetNumberAccumulations(1)
-        andor.SetNumberKinetics(2)
-        andor.SetAccumulationCycleTime(0)
-        andor.SetKineticCycleTime(0)
-        andor.SetPreAmpGain(0)
-        andor.SetHSSpeed(0, 0)
-        andor.SetVSSpeed(1)
-        andor.SetShutter(1, 1, 0, 0)
-        andor.SetTriggerMode(1)
-        andor.SetExposureTime(500e-6)
-        andor.SetImage(1, 1, 1, 1024, 1, 1024)
+        # andor.SetAcquisitionMode(3)
+        # andor.SetReadMode(4)
+        # andor.SetNumberAccumulations(1)
+        # andor.SetNumberKinetics(2)
+        # andor.SetAccumulationCycleTime(0)
+        # andor.SetKineticCycleTime(0)
+        # andor.SetPreAmpGain(2)
+        # andor.SetHSSpeed(0, 0)
+        # andor.SetVSSpeed(1)
+        # andor.SetShutter(1, 1, 0, 0)
+        # andor.SetTriggerMode(1)
+        # andor.SetExposureTime(500e-6)
+        # andor.SetImage(1, 1, 1, 1024, 1, 1024)
         
-        for i in range(2):
-            andor.StartAcquisition()
-            andor.WaitForAcquisition()
+        # for i in range(2):
+        #     andor.StartAcquisition()
+        #     andor.WaitForAcquisition()
 
-        data = andor.GetAcquiredData(2 * 1024 * 1024).reshape(2, 1024, 1024)
-        images = {key: np.rot90(data[i], 2)
-                  for i, key in enumerate(["image", "bright"])}
+        # data = andor.GetAcquiredData(2 * 1024 * 1024).reshape(2, 1024, 1024)
+        # images = {key: np.rot90(data[i], 2)
+        #           for i, key in enumerate(["image", "bright"])}
         
-        data_path = os.path.join(self.data_directory, self.value)
-        data_directory = os.path.dirname(data_path)
-        if not os.path.isdir(data_directory):
-            os.makedirs(data_directory)
+        # data_path = os.path.join(self.data_directory, self.value)
+        # data_directory = os.path.dirname(data_path)
+        # if not os.path.isdir(data_directory):
+        #     os.makedirs(data_directory)
 
-        h5f = h5py.File(data_path, "w")
-        for image in images:
-            h5f.create_dataset(image, data=images[image], 
-                    compression=self.compression, 
-                    compression_opts=self.compression_level)
-        h5f.close()
+        # h5f = h5py.File(data_path, "w")
+        # for image in images:
+        #     h5f.create_dataset(image, data=images[image], 
+        #             compression=self.compression, 
+        #             compression_opts=self.compression_level)
+        # h5f.close()
 
-        print(data_path)
+        # print(data_path)
 
 Parameter = RecordPath
