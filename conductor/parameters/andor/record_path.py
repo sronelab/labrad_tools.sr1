@@ -20,8 +20,10 @@ class RecordPath(ConductorParameter):
         ]
 
 
-    data_filename = '{}.andor.txt'
-    nondata_filename = '{}/andor.txt'
+    # data_filename = '{}.andor.txt'
+    # nondata_filename = '{}/andor.txt'
+    data_filename = '{}.andor.json'
+    nondata_filename = '{}/andor.json'
 
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
     compression = 'gzip'
@@ -101,7 +103,8 @@ class RecordPath(ConductorParameter):
         andor.SetOutputAmplifier(0)
         andor.SetEMGainMode(2) # Linear gain mode.
         andor.SetEMCCDGain(50)
-        andor.SetExposureTime(0.001)
+        exposure_time = 0.001
+        andor.SetExposureTime(exposure_time)
         andor.SetShutter(1, 1, 0, 0) # open shutter
         andor.SetReadMode(3) # single track mode
         andor.SetSingleTrack(290, 100) 
@@ -111,7 +114,8 @@ class RecordPath(ConductorParameter):
         andor.SetAcquisitionMode(3)
         andor.SetNumberKinetics(3)
         andor.SetBaselineClamp(0)
-        andor.SetPreAmpGain(2)
+        preamp_gain = 2
+        andor.SetPreAmpGain(preamp_gain)
 
 
         # Start acquisition and get images
@@ -132,10 +136,27 @@ class RecordPath(ConductorParameter):
 
         time_start_write = time.time()
 
+
+        #data dictionary, add here if you want more stored values
+        data_string = {
+            'time': time_start_write,
+            'g': temp_image_g.tolist(),
+            'e': temp_image_e.tolist(),
+            'bg': temp_image_bg.tolist(),
+            'camera_temp': str(andor.GetTemperature()),
+            'emccd_gain': str(andor.GetEMCCDGain()),
+            'preamp_gain': str(preamp_gain),
+            'exposure_time': str(exposure_time),
+
+            }
+
         with open(data_path, 'w') as file:
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
+            json.dump(data_string,file)
+
+        # with open(data_path, 'w') as file:
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
 
         # overwrite data for live plot
         dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.txt")
