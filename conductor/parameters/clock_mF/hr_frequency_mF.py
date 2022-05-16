@@ -10,7 +10,7 @@ class HrFrequencyMF(ConductorParameter,DG4000):
     priority = 2
 
     _vxi11_address = '192.168.1.37'
-    _source = 1
+    _source = 2
 
 
     def update(self):

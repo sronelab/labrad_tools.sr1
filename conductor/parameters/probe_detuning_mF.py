@@ -47,9 +47,19 @@ class ProbeDetuningMF(ConductorParameter):
 
             f_fnc = 2.0*(-1.0*float(mF_value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
             f_steer = f_fnc/2.0 - f_vco
-
+	
             #correcting for mF path. We take +1 order of f steer aftering going through -1 order 
             #of 100 MHz aom
+	    # Alex's modification 2022/02/02
+	    # for top clock path we have a 41MHz AOM
+	    
+	    f_aom_2 = 41.e6 #41 MHz + 1 order
+	    #f_fnc = 73.504e6 #(f_vco - f_aom_2)*2
+#	    f_fnc = f_fnc - 2*f_steer - f_aom_2*2
+#	    f_steer = f_fnc/2.0 -f_vco + f_aom_2
+	    f_fnc += (-f_steer - f_aom_2)*2
+	    f_steer = f_steer + f_aom_2
+
 #            f_fnc += (100.e6-f_steer)*2.
 #            f_steer =  100.e6-f_steer
 

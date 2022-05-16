@@ -57,7 +57,7 @@ class BoardABCD(YeSrDigitalBoard):
         YeSrDigitalChannel(loc=['C', 8], name='FNC LO switch', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['C', 9], name='f_steer RF switch', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['C', 10], name='ND flipper TTL', mode='auto', manual_output=False, invert=False),
-        YeSrDigitalChannel(loc=['C', 11], name='NC21', mode='auto', manual_output=False, invert=False),
+        YeSrDigitalChannel(loc=['C', 11], name='Doppler Flipper', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['C', 12], name='NC22', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['C', 13], name='NC23', mode='auto', manual_output=False, invert=False),
         YeSrDigitalChannel(loc=['C', 14], name='NC24', mode='auto', manual_output=False, invert=False),

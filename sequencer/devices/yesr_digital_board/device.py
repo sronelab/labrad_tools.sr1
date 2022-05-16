@@ -7,7 +7,10 @@ from sequencer.devices.yesr_sequencer_board.helpers import time_to_ticks
 from sequencer.devices.yesr_digital_board.helpers import get_output
 
 T_TRIGGER = 2e-3
-MAX_TICKS = 2**32 - 2**8 # last 8 bits reserverd for specifying external trigger
+MAX_TICKS = 2.9e9 #wait for external trigger over 58s time step
+#2**32 - 2**8 # last 8 bits reserverd for specifying external trigger
+SET_MAX = 2**32 - 2**8 + 1 #give the 0th trigger channel
+
 
 class YeSrDigitalBoard(YeSrSequencerBoard):
     sequencer_type = 'digital'
@@ -44,6 +47,7 @@ class YeSrDigitalBoard(YeSrSequencerBoard):
         return {'dt': dt, 'out': channel.manual_output}
 
     def make_sequence_bytes(self, sequence):
+        print 'making bytes...'
         if self.is_master:
             # default trigger to hi
             for s in sequence[self.master_channel]:
@@ -65,10 +69,14 @@ class YeSrDigitalBoard(YeSrSequencerBoard):
             for s in sequence[c.key]:
                 dt = time_to_ticks(self.clk, s['dt'])
                 s.update({'dt': dt, 't': total_ticks})
+
                 if dt > MAX_TICKS:
-                    if c.key == self.master_channel:
+                    dt = SET_MAX #trigger off of 0th channel
+		    s.update({'dt': dt})
+		    if c.key == self.master_channel:
                         print "trigger mask:", bin(dt)[26:]
                         s.update({'out': False})
+						
                 total_ticks += dt
             sequence[c.key].append({'dt': 1, 't': total_ticks, 'out': sequence[c.key][-1]['out']})
 
