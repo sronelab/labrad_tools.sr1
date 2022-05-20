@@ -52,9 +52,9 @@ class SequencerClient(QtGui.QWidget):
 
     spacer_width = 65
     spacer_height = 15
-    namecolumn_width = 130
+    namecolumn_width = 200
     namelabel_width = 200
-    durationrow_height = 20
+    durationrow_height = 25
     analog_height = 50
     max_columns = 100
     digital_colors = ["#ff0000", "#ff7700", "#ffff00", "#00ff00", "#0000ff", "#8a2be2"]

@@ -1,4 +1,9 @@
 *.svg
-*.pyc
 *.experiments
 *.values
+*.pyc
+*/*.pyc
+*/*/*.pyc
+*/*/*/*.pyc
+*/*/*/*/*.pyc
+*/*/*/*/*/*.pyc
