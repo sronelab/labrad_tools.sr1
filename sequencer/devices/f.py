@@ -19,7 +19,7 @@ class BoardF(YeSrAnalogBoard):
         YeSrAnalogChannel(loc=1, name='SG382 mF clock FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=2, name='11/2 Intensity', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=3, name='9/2 Intensity', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=4, name='Fixed 813 setpoint -540mV', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=4, name='not in use', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=5, name='9/2 FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=6, name='11/2 FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=7, name='Z-bias bottom', mode='auto', manual_output=0.0),
