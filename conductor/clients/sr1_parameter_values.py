@@ -11,8 +11,8 @@ class MyClient(ParameterValuesClient):
     servername = 'conductor'
     update_id = 461028
     updateTime = 100 # [ms]
-    boxWidth = 140
-    boxHeight = 20
+    boxWidth = 200
+    boxHeight = 25
     numRows = 30
 
 if __name__ == '__main__':

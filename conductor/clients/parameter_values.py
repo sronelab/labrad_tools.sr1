@@ -61,7 +61,7 @@ class ParameterValuesClient(QtGui.QGroupBox):
 
     def populateGUI(self):
         # Preloading some of the rows with commonly used parameter values
-        preloadNames = ['Z_zero', 'Z_mot', 'Y_zero', 'Y_mot', 'X_zero', 'X_mot', 'X_pol', 'X_bias', 'T_blue', 'T_rabi']
+        preloadNames = ['Z_zero_top','Z_zero_btm', 'Y_zero', 'X_zero', 'Z_mot', 'Y_mot', 'X_mot', 'X_pol', 'X_bias', 'T_blue', 'T_rabi', 'Int813']
         names = ['sequencer.'+name for name in preloadNames] # adding 'sequencer.' to each
         names += ['']*(self.numRows-len(preloadNames)) # padding the list to be the same length as the number of rows displayed
         self.parameterRows = []
