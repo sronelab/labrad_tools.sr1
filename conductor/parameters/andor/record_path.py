@@ -13,10 +13,12 @@ class RecordPath(ConductorParameter):
     priority = 1
     record_types = {
         "image": "absorption", # Sr2 legacy
-        "readout_pmt":"fluorescence"
+        "readout_pmt":"fluorescence",
+        "readout_pmt_2Dimg":"fluorescence2D"
         }
     record_sequences = [
         'readout_pmt',
+        "readout_pmt_2Dimg"
         ]
 
 
@@ -92,11 +94,14 @@ class RecordPath(ConductorParameter):
         if record_type == 'fluorescence':
             self.take_fluorescence_image()
 
+        if record_type == 'fluorescence2D':
+            self.take_fluorescence_image_2D()
+
         self.server._send_update({self.name: self.value})
         
     def take_fluorescence_image(self):
         """Sr1 
-        Take flourescence imaging. """
+        Take 1D flourescence imaging. """
         andor = self._andor
         andor.AbortAcquisition()
         # Acquisition settings
@@ -106,8 +111,6 @@ class RecordPath(ConductorParameter):
         exposure_time = 0.001
         andor.SetExposureTime(exposure_time)
         andor.SetShutter(1, 1, 0, 0) # open shutter
-        andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(290, 100) 
         andor.SetHSSpeed(0, 0)
         andor.SetVSSpeed(1)
         andor.SetTriggerMode(1) #external
@@ -116,12 +119,16 @@ class RecordPath(ConductorParameter):
         andor.SetBaselineClamp(0)
         preamp_gain = 2
         andor.SetPreAmpGain(preamp_gain)
+        
+        andor.SetReadMode(3) # single track mode
+        andor.SetSingleTrack(290, 100) 
 
 
         # Start acquisition and get images
         andor.StartAcquisition()
         andor.WaitForAcquisition()
         temp_image_three = andor.GetAcquiredData(3*andor.GetDetector()[0])
+        time_start_write = time.time()
 
         # Write data
         data_path = os.path.join(self.data_directory, self.value)
@@ -133,9 +140,6 @@ class RecordPath(ConductorParameter):
         temp_image_g = temp_image_three[0:imlen]
         temp_image_e = temp_image_three[imlen:2*imlen]
         temp_image_bg = temp_image_three[2*imlen:3*imlen]
-
-        time_start_write = time.time()
-
 
         #data dictionary, add here if you want more stored values
         data_string = {
@@ -170,8 +174,53 @@ class RecordPath(ConductorParameter):
         print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
         print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
 
+    def take_fluorescence_image_2D(self):
+            # # Sr2 legacy
+            andor = self._andor
 
+            andor.AbortAcquisition()
+            # Acquisition settings
+            andor.SetOutputAmplifier(0)
+            andor.SetEMGainMode(2) # Linear gain mode.
+            andor.SetEMCCDGain(50)
+            exposure_time = 0.001
+            andor.SetExposureTime(exposure_time)
+            andor.SetShutter(1, 1, 0, 0) # open shutter
+            andor.SetHSSpeed(0, 0)
+            andor.SetVSSpeed(1)
+            andor.SetTriggerMode(1) #external
+            andor.SetAcquisitionMode(3)
+            andor.SetNumberKinetics(3)
+            andor.SetBaselineClamp(0)
+            preamp_gain = 2
+            andor.SetPreAmpGain(preamp_gain)
+            
+            andor.SetReadMode(4) # image mode
+            andor.SetImage(1, 1, 1, 512, 241, 340)
 
+            andor.StartAcquisition()
+            andor.WaitForAcquisition()
+
+            data = andor.GetAcquiredData(3 * 512 * 100).reshape(3, 512, 100)
+            images = {key: np.rot90(data[i], 2)
+                      for i, key in enumerate(["g", "e", "bg"])}
+            dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_2D_test.hdf5")
+            # data_path = os.path.join(self.data_directory, self.value)
+            # data_directory = os.path.dirname(data_path)
+            # if not os.path.isdir(data_directory):
+            #     os.makedirs(data_directory)
+
+            with h5py.File(dummy_data_path, "w") as h5f:
+                for image in images:
+                    h5f.create_dataset(image, data=images[image], 
+                            compression=self.compression, 
+                            compression_opts=self.compression_level)
+            print(dummy_data_path)
+            print('Camera temp is (C): ' + str(andor.GetTemperature()))
+            print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
+            print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+
+            
     def take_absorption_image(self):
         # # Sr2 legacy
         andor = self._andor
