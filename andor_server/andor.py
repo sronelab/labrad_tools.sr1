@@ -1032,6 +1032,6 @@ class Andor(object):
             DRV_SUCCESS             Acquisition Event occurred.
             DRV_NO_NEW_DATA         Non-Acquisition Event occurred.(eg CancelWait () called, time out) 
         """
-        error = self.dll.WaitForAcquisitionTimeOut(self.serial_number, iTimeOutMs)
+        error = self.dll.WaitForAcquisitionTimeOut(iTimeOutMs)
         self._log(sys._getframe().f_code.co_name, error)
         return 
