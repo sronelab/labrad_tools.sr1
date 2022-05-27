@@ -28,6 +28,7 @@ class RecordPath(ConductorParameter):
     # nondata_filename = '{}/andor.txt'
     data_filename = '{}.andor.json'
     nondata_filename = '{}/andor.json'
+    data2D_filename = '{}.andor.json'
 
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
     compression = 'gzip'
@@ -128,7 +129,7 @@ class RecordPath(ConductorParameter):
 
         # Start acquisition and get images
         andor.StartAcquisition()
-        timeout_ms = 20000
+        timeout_ms = 10000
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three = andor.GetAcquiredData(3*andor.GetDetector()[0])
         time_start_write = time.time()
@@ -154,16 +155,10 @@ class RecordPath(ConductorParameter):
             'emccd_gain': str(andor.GetEMCCDGain()),
             'preamp_gain': str(preamp_gain),
             'exposure_time': str(exposure_time),
-
             }
 
         with open(data_path, 'w') as file:
             json.dump(data_string,file)
-
-        # with open(data_path, 'w') as file:
-        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
-        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
-        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
 
         # overwrite data for live plot
         dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.txt")
@@ -203,30 +198,48 @@ class RecordPath(ConductorParameter):
             andor.SetImage(1, 1, 1, 512, 251, 330)
 
             andor.StartAcquisition()
-            timeout_ms = 20000
+            timeout_ms = 10000
             andor.WaitForAcquisitionTimeOut(timeout_ms)
 
-            data = andor.GetAcquiredData(3 * 512 * 80)#.reshape(3, 512, 80)
-            print(data.shape)
-            # images = {key: data[i]
-            #           for i, key in enumerate(["g", "e", "bg"])}
+            data = andor.GetAcquiredData(3*80*512).reshape(3, 80, 512)
+            images = {key: data[i]
+                      for i, key in enumerate(["g", "e", "bg"])}
+
             dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_2D_test.hdf5")
-            # data_path = os.path.join(self.data_directory, self.value)
-            # data_directory = os.path.dirname(data_path)
-            # if not os.path.isdir(data_directory):
-            #     os.makedirs(data_directory)
-            try:
-                with h5py.File(dummy_data_path, "w") as h5f:
-                    # for image in images:
-                    #     h5f.create_dataset(image, data=images[image], 
-                    #             compression=self.compression, 
-                    #             compression_opts=self.compression_level)
-                    h5f.create_dataset("all", data=data, 
+
+            data_path = os.path.join(self.data_directory, self.value[:-5]+'.hdf5') # convert .json to .hdf5
+            data_directory = os.path.dirname(data_path)
+            if not os.path.isdir(data_directory):
+                os.makedirs(data_directory)
+
+            #Save data
+
+            cam_infos = {
+            'time': time.time(),
+            'camera_temp': andor.GetTemperature(),
+            'emccd_gain': andor.GetEMCCDGain(),
+            'preamp_gain': preamp_gain,
+            'exposure_time': exposure_time,
+            }
+
+            with h5py.File(data_path, "w") as h5f:
+                for image in images:
+                    h5f.create_dataset(image, data=images[image], 
                             compression=self.compression, 
                             compression_opts=self.compression_level)
-            except:
-                print("Camera save error: writing dummy file failed.")
-            print(dummy_data_path)
+                # save camera info
+                for cam_info in cam_infos:
+                    h5f.create_dataset(cam_info, data=cam_infos[cam_info])
+
+            #Save dummy data for live plotting
+            with h5py.File(dummy_data_path, "w") as h5f:
+                for image in images:
+                    h5f.create_dataset(image, data=images[image], 
+                            compression=self.compression, 
+                            compression_opts=self.compression_level)
+
+            print("Camera save error: writing dummy file failed.")
+            print(data_path)
             print('Camera temp is (C): ' + str(andor.GetTemperature()))
             print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
             print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
