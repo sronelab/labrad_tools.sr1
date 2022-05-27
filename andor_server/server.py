@@ -474,7 +474,7 @@ class AndorServer(LabradServer):
         return error_code
 
     @setting(71, serial='i', returns='i')
-    def wait_for_acquisition(self, c, serial, iTimeOutMs):
+    def wait_for_acquisition_timeout(self, c, serial, iTimeOutMs):
         self._set_serial(serial)
         andor.WaitForAcquisitionTimeOut(iTimeOutMs)
         error_code = andor.error['WaitForAcquisitionTimeOut']
