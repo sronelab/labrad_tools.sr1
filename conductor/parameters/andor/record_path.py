@@ -14,11 +14,13 @@ class RecordPath(ConductorParameter):
     record_types = {
         "image": "absorption", # Sr2 legacy
         "readout_pmt":"fluorescence",
-        "readout_pmt_2Dimg":"fluorescence2D"
+        "readout_pmtTRIG":"fluorescence",
+        "readout_pmt_2Dimg":"fluorescence2D",
         }
     record_sequences = [
         'readout_pmt',
-        "readout_pmt_2Dimg"
+        "readout_pmt_2Dimg",
+        "readout_pmtTRIG",
         ]
 
 
@@ -126,7 +128,8 @@ class RecordPath(ConductorParameter):
 
         # Start acquisition and get images
         andor.StartAcquisition()
-        andor.WaitForAcquisition()
+        timeout_ms = 20000
+        andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three = andor.GetAcquiredData(3*andor.GetDetector()[0])
         time_start_write = time.time()
 
@@ -196,25 +199,33 @@ class RecordPath(ConductorParameter):
             andor.SetPreAmpGain(preamp_gain)
             
             andor.SetReadMode(4) # image mode
-            andor.SetImage(1, 1, 1, 512, 241, 340)
+            # andor.SetImage(1, 1, 1, 512, 241, 340)
+            andor.SetImage(1, 1, 1, 512, 251, 330)
 
             andor.StartAcquisition()
-            andor.WaitForAcquisition()
+            timeout_ms = 20000
+            andor.WaitForAcquisitionTimeOut(timeout_ms)
 
-            data = andor.GetAcquiredData(3 * 512 * 100).reshape(3, 512, 100)
-            images = {key: np.rot90(data[i], 2)
-                      for i, key in enumerate(["g", "e", "bg"])}
+            data = andor.GetAcquiredData(3 * 512 * 80)#.reshape(3, 512, 80)
+            print(data.shape)
+            # images = {key: data[i]
+            #           for i, key in enumerate(["g", "e", "bg"])}
             dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_2D_test.hdf5")
             # data_path = os.path.join(self.data_directory, self.value)
             # data_directory = os.path.dirname(data_path)
             # if not os.path.isdir(data_directory):
             #     os.makedirs(data_directory)
-
-            with h5py.File(dummy_data_path, "w") as h5f:
-                for image in images:
-                    h5f.create_dataset(image, data=images[image], 
+            try:
+                with h5py.File(dummy_data_path, "w") as h5f:
+                    # for image in images:
+                    #     h5f.create_dataset(image, data=images[image], 
+                    #             compression=self.compression, 
+                    #             compression_opts=self.compression_level)
+                    h5f.create_dataset("all", data=data, 
                             compression=self.compression, 
                             compression_opts=self.compression_level)
+            except:
+                print("Camera save error: writing dummy file failed.")
             print(dummy_data_path)
             print('Camera temp is (C): ' + str(andor.GetTemperature()))
             print('EMCCD gain: ' + str(andor.GetEMCCDGain()))

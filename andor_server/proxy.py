@@ -1004,3 +1004,30 @@ class AndorProxy(object):
         self._log(sys._getframe().f_code.co_name, error)
         return
 
+
+    def WaitForAcquisitionTimeOut(self, iTimeOutMs):
+        """ 
+        Description:
+            WaitForAcquisitionTimeOut can be called after an acquisition is started using
+            StartAcquisition to put the calling thread to sleep until an Acquisition Event occurs. This
+            can be used as a simple alternative to the functionality provided by the SetDriverEvent
+            function, as all Event creation and handling is performed internally by the SDK library. Like
+            the SetDriverEvent functionality it will use less processor resources than continuously
+            polling with the GetStatus function. If you wish to restart the calling thread without waiting
+            for an Acquisition event, call the function CancelWait. An Acquisition Event occurs each
+            time a new image is acquired during an Accumulation, Kinetic Series or Run-Till-Abort
+            acquisition or at the end of a Single Scan Acquisition. If an Acquisition Event does not
+            occur within _TimeOutMs milliseconds, WaitForAcquisitionTimeOut returns
+            DRV_NO_NEW_DATA
+        Parameters:
+             int iTimeOutMs: Time before returning DRV_NO_NEW_DATA if no Acquisition Event
+            occurs.
+        Return:
+            DRV_SUCCESS             Acquisition Event occurred.
+            DRV_NO_NEW_DATA         Non-Acquisition Event occurred.(eg CancelWait () called, time out) 
+        """
+        error = self.andor_server.wait_for_acquisition_timeout(self.serial_number, iTimeOutMs)
+        self._log(sys._getframe().f_code.co_name, error)
+        return 
+
+
