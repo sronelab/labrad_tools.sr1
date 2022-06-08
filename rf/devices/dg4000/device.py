@@ -46,6 +46,39 @@ class DG4000(object):
             raise FrequencyOutOfBoundsError(frequency)
         command = 'SOUR{}:FREQ {}'.format(self._source, frequency)
         self._inst.write(command)
+
+    @property
+    def mod_type(self):
+        command = 'SOUR{}:MOD:TYP?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @mod_type.setter
+    def mod_type(self, mod_parameter):
+        command = 'SOUR{}:MOD:TYP {}'.format(self._source, mod_parameter)
+        self._inst.write(command)
+    
+    @property
+    def fsk_source(self):
+        command = 'SOUR{}:MOD:FSK:SOUR?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @fsk_source.setter
+    def fsk_source(self, fsk_source):
+        command = 'SOUR{}:MOD:FSK:SOUR {}'.format(self._source, fsk_source)
+        self._inst.write(command)
+
+    @property
+    def fsk_frequency(self):
+        command = 'SOUR{}:MOD:FSK?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @fsk_frequency.setter
+    def fsk_frequency(self, fsk_frequency):
+        command = 'SOUR{}:MOD:FSK {}'.format(self._source, fsk_frequency)
+        self._inst.write(command)
     
     @property
     def start_frequency(self):
