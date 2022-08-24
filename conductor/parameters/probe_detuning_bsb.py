@@ -18,11 +18,11 @@ class ProbeDetuningBSB(ConductorParameter):
     def update(self):
 
 
-        print('top clock BSB FSK called')
+        
 
         if self.value is not None:
             bsb_value = self.value
-
+            print('top clock BSB FSK (kHz): ' + str(bsb_value/1.e3))
             request = {
                     'clock_mF.hr_frequency_bsb': float(bsb_value), 
                     }

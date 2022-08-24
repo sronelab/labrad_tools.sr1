@@ -81,6 +81,50 @@ class DG4000(object):
         self._inst.write(command)
     
     @property
+    def psk_source(self):
+        command = 'SOUR{}:MOD:PSK:SOUR?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @psk_source.setter
+    def psk_source(self, psk_source):
+        command = 'SOUR{}:MOD:PSK:SOUR {}'.format(self._source, psk_source)
+        self._inst.write(command)
+
+    @property
+    def psk_phase(self):
+        command = 'SOUR{}:MOD:PSK:PHAS?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @psk_phase.setter
+    def psk_phase(self, psk_phase):
+        command = 'SOUR{}:MOD:PSK:PHAS {}'.format(self._source, psk_phase)
+        self._inst.write(command)
+
+    @property
+    def pm_source(self):
+        command = 'SOUR{}:MOD:PM:SOUR?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @pm_source.setter
+    def pm_source(self, pm_source):
+        command = 'SOUR{}:MOD:PM:SOUR {}'.format(self._source, pm_source)
+        self._inst.write(command)
+
+    @property
+    def pm_dev(self):
+        command = 'SOUR{}:MOD:PM?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @pm_dev.setter
+    def pm_dev(self, pm_dev):
+        command = 'SOUR{}:MOD:PM {}'.format(self._source, pm_dev)
+        self._inst.write(command)
+
+    @property
     def start_frequency(self):
         command = 'SOUR{}:FREQ:STAR?'.format(self._source)
         ans = self._inst.ask(command)
