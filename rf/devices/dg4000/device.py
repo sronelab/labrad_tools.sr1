@@ -48,6 +48,17 @@ class DG4000(object):
         self._inst.write(command)
 
     @property
+    def wave_type(self):
+        command = 'SOUR{}:APPL?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @wave_type.setter
+    def wave_type(self, waveform):
+        command = 'SOUR{}:APPL: {}'.format(self._source, waveform)
+        self._inst.write(command)
+
+    @property
     def mod_type(self):
         command = 'SOUR{}:MOD:TYP?'.format(self._source)
         ans = self._inst.ask(command)
@@ -122,6 +133,51 @@ class DG4000(object):
     @pm_dev.setter
     def pm_dev(self, pm_dev):
         command = 'SOUR{}:MOD:PM {}'.format(self._source, pm_dev)
+        self._inst.write(command)
+
+
+    @property
+    def ask_source(self):
+        command = 'SOUR{}:MOD:ASK:SOUR?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @ask_source.setter
+    def ask_source(self, ask_source):
+        command = 'SOUR{}:MOD:ASK:SOUR {}'.format(self._source, ask_source)
+        self._inst.write(command)
+
+    @property
+    def ask_polarity(self):
+        command = 'SOUR{}:MOD:ASK:POL?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @ask_polarity.setter
+    def ask_polarity(self, ask_pol):
+        command = 'SOUR{}:MOD:ASK:POL {}'.format(self._source, ask_pol)
+        self._inst.write(command)
+
+    @property
+    def ask_amplitude(self):
+        command = 'SOUR{}:MOD:ASK:AMPL?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @ask_amplitude.setter
+    def ask_amplitude(self, ask_amp):
+        command = 'SOUR{}:MOD:ASK:AMPL {}'.format(self._source, ask_amp)
+        self._inst.write(command)
+
+    @property
+    def duty_cycle(self):
+        command = 'SOUR{}:PULSe:DCYCle?'.format(self._source)
+        ans = self._inst.ask(command)
+        return float(ans)
+    
+    @duty_cycle.setter
+    def duty_cycle(self, duty_cycle):
+        command = 'SOUR{}:PULSe:DCYCle {}'.format(self._source, duty_cycle)
         self._inst.write(command)
 
     @property
