@@ -200,7 +200,7 @@ class RecordPath(ConductorParameter):
             andor.SetImage(1, 1, 1, 512, 251, 330)
 
             andor.StartAcquisition()
-            timeout_ms = 10000
+            timeout_ms = 30000
             andor.WaitForAcquisitionTimeOut(timeout_ms)
 
             data = andor.GetAcquiredData(3*80*512).reshape(3, 80, 512)
