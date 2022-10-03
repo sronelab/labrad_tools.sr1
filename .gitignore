@@ -2,3 +2,4 @@
 *.experiments
 *.values
 *.pyc
+conductor/parameters/andor/record_path.pyc
