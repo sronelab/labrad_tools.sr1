@@ -3,6 +3,7 @@ import numpy as np
 import time
 import os
 import h5py
+import pickle
 
 from conductor.parameter import ConductorParameter
 
@@ -163,11 +164,15 @@ class RecordPath(ConductorParameter):
             json.dump(data_string,file)
 
         # overwrite data for live plot
-        dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.txt")
-        with open(dummy_data_path, 'w') as file:
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
-            file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
+        # dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.txt")
+        # with open(dummy_data_path, 'w') as file:
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_g,max_line_width = 5000)[1:-1] + ' \n')
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_e,max_line_width = 5000)[1:-1] + ' \n')
+        #     file.write(str(time_start_write) + ' ' + np.array2string(temp_image_bg,max_line_width = 5000)[1:-1] + ' \n')
+        # # overwrite data for live plot
+        dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.pickle")
+        with open(dummy_data_path, 'wb') as file:
+            pickle.dump(data_string, file, pickle.HIGHEST_PROTOCOL)
 
         print(data_path)
         print('Camera temp is (C): ' + str(andor.GetTemperature()))
