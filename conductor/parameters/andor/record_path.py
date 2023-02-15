@@ -93,15 +93,15 @@ class RecordPath(ConductorParameter):
         intersection = np.intersect1d(sequence_value, self.record_types.keys())
         if intersection:
             record_type = self.record_types.get(intersection[-1])
-    
-        if record_type == 'absorption':
-            self.take_absorption_image()
 
         if record_type == 'fluorescence':
             self.take_fluorescence_image()
-
-        if record_type == 'fluorescence2D':
+        elif record_type == 'fluorescence2D':
             self.take_fluorescence_image_2D()
+        elif record_type == 'absorption':
+            self.take_absorption_image()
+        else:
+            print("Warning: record_type invalid.")
 
         self.server._send_update({self.name: self.value})
         
@@ -129,6 +129,19 @@ class RecordPath(ConductorParameter):
         andor.SetReadMode(3) # single track mode
         andor.SetSingleTrack(290, 100) 
 
+        # outputing status of the camera
+        print(data_path)
+        print('Camera temp is (C): ' + str(andor.GetTemperature()))
+        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
+        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+        
+        # Restart the cooler if the temperature of the camera is too high.
+        if float(andor.GetTemperature()) > 0:
+            print("Cooler restart.")
+            andor.SetFanMode(2) # 2 for off
+            andor.SetTemperature(-70)
+            andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
+            andor.CoolerON()
 
         # Start acquisition and get images
         andor.StartAcquisition()
@@ -174,10 +187,7 @@ class RecordPath(ConductorParameter):
         with open(dummy_data_path, 'wb') as file:
             pickle.dump(data_string, file, pickle.HIGHEST_PROTOCOL)
 
-        print(data_path)
-        print('Camera temp is (C): ' + str(andor.GetTemperature()))
-        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
-        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+
 
     def take_fluorescence_image_2D(self):
             # # Sr2 legacy
