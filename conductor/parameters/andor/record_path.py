@@ -129,11 +129,6 @@ class RecordPath(ConductorParameter):
         andor.SetReadMode(3) # single track mode
         andor.SetSingleTrack(290, 100) 
 
-        # outputing status of the camera
-        print(data_path)
-        print('Camera temp is (C): ' + str(andor.GetTemperature()))
-        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
-        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
         
         # Restart the cooler if the temperature of the camera is too high.
         if float(andor.GetTemperature()) > 0:
@@ -188,6 +183,11 @@ class RecordPath(ConductorParameter):
             pickle.dump(data_string, file, pickle.HIGHEST_PROTOCOL)
 
 
+        # outputing status of the camera
+        print(data_path)
+        print('Camera temp is (C): ' + str(andor.GetTemperature()))
+        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
+        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
 
     def take_fluorescence_image_2D(self):
             # # Sr2 legacy
