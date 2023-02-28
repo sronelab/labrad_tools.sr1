@@ -66,6 +66,10 @@ class AD9956(DefaultDevice):
 
         time.sleep(0.5) 
         reactor.callInThread(self.delayed_call, 5, self.set_frequency, self.default_frequency)
+
+        # Setting a sinlge frequency manually for debugging
+        # reactor.callInThread(self.delayed_call, 5, self.set_frequency, 150e6, 0, "high")
+        # reactor.callInThread(self.delayed_call, 5, self.set_frequency, 30e6, 1, "high")
     
     def delayed_call(self, delay, func, *args):
         time.sleep(delay)
@@ -211,7 +215,7 @@ class AD9956(DefaultDevice):
         # could retunr start stop rate here
         return None
 
-    def set_frequency(self, frequency, board=0, output='low'):
+    def set_frequency(self, frequency, board=-1, output='low'):
         """ select single frequency output mode at specified frequency
 
         Args:
@@ -219,6 +223,10 @@ class AD9956(DefaultDevice):
         Returns:
             None
         """
+        # overwrite board if no input
+        if board == -1:
+            board = self.board_num
+
         min_freq = min(self.frequency_range)
         max_freq = max(self.frequency_range)
         if not frequency == sorted([frequency, min_freq, max_freq])[1]:
@@ -232,13 +240,13 @@ class AD9956(DefaultDevice):
         ftw = self.make_ftw(frequency) 
         if output == 'high':
             instruction_set = (
-                get_instruction_set(self.board_num, self.cfr1_reg, cfr1w)
-                + get_instruction_set(self.board_num, self.fhigh_reg, ftw)
+                get_instruction_set(board, self.cfr1_reg, cfr1w)
+                + get_instruction_set(board, self.fhigh_reg, ftw)
                 )
         else:
             instruction_set = (
-                get_instruction_set(self.board_num, self.cfr1_reg, cfr1w)
-                + get_instruction_set(self.board_num, self.flow_reg, ftw)
+                get_instruction_set(board, self.cfr1_reg, cfr1w)
+                + get_instruction_set(board, self.flow_reg, ftw)
                 )        
         command = ''.join(instruction_set)
         self.ser.write(command)

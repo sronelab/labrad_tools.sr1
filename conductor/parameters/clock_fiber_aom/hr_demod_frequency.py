@@ -18,6 +18,7 @@ class HrDemodFrequency(ConductorParameter):
     
     def update(self):
         if self.value is not None:
+            print 'clock_aom.hr_demod_frequency', self.value
 #            min_freq = min([self.value, self.dark_frequency])
 #            max_freq = max([self.value, self.dark_frequency])
 #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)
