@@ -13,7 +13,7 @@ class Sequence(ConductorParameter):
     autostart = True
     priority = 10
     value_type = 'list'
-    value = ['blue_mot'] * 1
+    value = ['blue_mot', 'red_mot', 'clock_zero', 'readout_pmt'] * 1
 
     loop = True
     call_in_thread = False
