@@ -39,6 +39,8 @@ class YeSrSequencerBoard(DefaultDevice):
     sequence_bytes = None
     max_sequence_bytes = 24000
 
+    parameter_values_previous = None 
+
     def initialize(self, config):
         for key, value in config.items():
             setattr(self, key, value)
@@ -64,7 +66,7 @@ class YeSrSequencerBoard(DefaultDevice):
         for i in range(365):
             day = date.today() - timedelta(i)
             sequencepath = self.sequence_directory.format(day.strftime('%Y%m%d')) + sequencename
-	    print sequencepath
+	    # print sequencepath
             if os.path.exists(sequencepath):
                 break
         if not os.path.exists(sequencepath):
@@ -76,7 +78,7 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def save_sequence(self, sequence, sequence_name, tmpdir=True):
         sequence_directory = self.sequence_directory.format(time.strftime('%Y%m%d'))
-	print sequence_directory
+	# print sequence_directory
         if tmpdir:
             sequence_directory = os.path.join(sequence_directory, '.tmp')
         if not os.path.exists(sequence_directory):
@@ -166,7 +168,6 @@ class YeSrSequencerBoard(DefaultDevice):
         for subsequence_name in subsequence_names:
             subsequence = self.load_sequence(subsequence_name)
             subsequence_list.append(subsequence)
-
         raw_sequence = combine_sequences(subsequence_list)
         self.set_raw_sequence(raw_sequence)
 
@@ -174,19 +175,28 @@ class YeSrSequencerBoard(DefaultDevice):
         return self.subsequence_names
    
     def set_raw_sequence(self, raw_sequence):
+        # Following part takes some time. 
         self.raw_sequence = raw_sequence
         parameter_names = self.get_sequence_parameter_names(raw_sequence)
         parameter_values = self.get_sequence_parameter_values(parameter_names)
-        programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
-        sequence_bytes = self.make_sequence_bytes(programmable_sequence)
-        if len(sequence_bytes) > self.max_sequence_bytes:
-            message = "sequence of {} bytes exceeds maximum length of {} bytes".format(len(sequence_bytes), self.max_sequence_bytes)
-            raise Exception(message)
-        self.sequence_bytes = sequence_bytes
+
+        # Rewrite if the previous and the current parameter_values are different. 
+        if parameter_values != self.parameter_values_previous:
+            print("Rewriting the sequence...")
+            programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
+            sequence_bytes = self.make_sequence_bytes(programmable_sequence)
+            if len(sequence_bytes) > self.max_sequence_bytes:
+                message = "sequence of {} bytes exceeds maximum length of {} bytes".format(len(sequence_bytes), self.max_sequence_bytes)
+                raise Exception(message)
+            self.sequence_bytes = sequence_bytes
+            self.set_loading(True)
+            self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
+            self.set_loading(False)
+        else:
+            print("Skip rewriting the sequence. Parameter values are the same.")
         
-        self.set_loading(True)
-        self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
-        self.set_loading(False)
+        #save parameter_values for the next shot
+        self.parameter_values_previous = parameter_values
     
     def get_raw_sequence(self):
         return self.raw_sequence
