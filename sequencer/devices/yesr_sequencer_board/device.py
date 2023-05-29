@@ -29,6 +29,7 @@ class YeSrSequencerBoard(DefaultDevice):
     subsequence_names = None
     sequence = None
     raw_sequene = None
+    raw_sequence_previous = None
     is_master = False
     master_channel = 'Trigger@D15'
     run_priority = 0
@@ -175,14 +176,14 @@ class YeSrSequencerBoard(DefaultDevice):
         return self.subsequence_names
    
     def set_raw_sequence(self, raw_sequence):
-        # Following part takes some time. 
         self.raw_sequence = raw_sequence
         parameter_names = self.get_sequence_parameter_names(raw_sequence)
         parameter_values = self.get_sequence_parameter_values(parameter_names)
 
         # Rewrite if the previous and the current parameter_values are different. 
-        if parameter_values != self.parameter_values_previous:
+        if (parameter_values != self.parameter_values_previous) | (raw_sequence != self.raw_sequence_previous):
             print("Rewriting the sequence...")
+            ti = time.time()
             programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
             sequence_bytes = self.make_sequence_bytes(programmable_sequence)
             if len(sequence_bytes) > self.max_sequence_bytes:
@@ -192,11 +193,13 @@ class YeSrSequencerBoard(DefaultDevice):
             self.set_loading(True)
             self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
             self.set_loading(False)
+            print(" took {} seconds".format(time.time()-ti))
         else:
             print("Skip rewriting the sequence. Parameter values are the same.")
         
         #save parameter_values for the next shot
         self.parameter_values_previous = parameter_values
+        self.raw_sequence_previous = raw_sequence
     
     def get_raw_sequence(self):
         return self.raw_sequence
@@ -221,7 +224,7 @@ class YeSrSequencerBoard(DefaultDevice):
                 parameter_name.replace('*', 'sequencer.'): None
                     for parameter_name in parameter_names
                 }
-            print request
+            # print request
             conductor_server = self.cxn[self.conductor_servername]
             parameter_values_json = conductor_server.get_next_parameter_values(json.dumps(request))
             parameter_values = json.loads(parameter_values_json)
