@@ -92,7 +92,6 @@ class RecordPath(ConductorParameter):
             sequence_value = sequence.value
         intersection = np.intersect1d(sequence_value, self.record_types.keys())
         
-        # Count the number of imaging requests.
         if intersection != None:
             record_type = self.record_types.get(intersection[-1])
 
