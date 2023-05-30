@@ -225,7 +225,26 @@ class SequencerServer(DeviceServer):
             response.update({device_name: device_response})
         self._send_update({'running': response})
         return response
+
+    @setting(16)
+    def is_device_writing(self, c, request_json='{}'):
+        request = json.loads(request_json)
+        response = self._is_device_writing(request)
+        response_bool = any(response.values())
+        return response_bool
     
+    def _is_device_writing(self, request={}):
+        if request == {}:
+            request = {device_name: None for device_name in self.devices}
+
+        response = {}
+        for device_name in request:
+            device = self._get_device(device_name)
+            device_response = device.get_is_device_writing()
+            response.update({device_name: device_response})
+        return response
+
+
 Server = SequencerServer()
     
 if __name__ == "__main__":
