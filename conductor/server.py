@@ -23,6 +23,7 @@ import os
 import sys
 import time
 import traceback
+import labrad
 
 from server_tools.threaded_server import ThreadedServer
 from labrad.server import setting
@@ -108,6 +109,7 @@ class ConductorServer(ThreadedServer):
 
     def initServer(self):
         self._initialize_parameters(request={}, all=True, suppress_errors=True)
+        self.connect_to_labrad()
     
     def stopServer(self):
         self._save_parameter_values()
@@ -868,10 +870,18 @@ class ConductorServer(ThreadedServer):
     @setting(10)
     def advance(self, c, suppress_errors=False):
         self._advance(suppress_errors)
-    
+
     def _advance(self, suppress_errors=False):
-        print time.time()
+        # print time.time()
         # prevent multiple advances from happening at the same time
+
+        # Checking the sequencer server's status
+        isbusy = self._check_sequencer()
+        while isbusy:
+            time.sleep(0.02)
+            print("Waiting for the sequencer")
+            isbusy = self._check_sequencer()
+
         if self.is_advancing:
             raise AlreadyAdvancing()
         try:
@@ -889,7 +899,7 @@ class ConductorServer(ThreadedServer):
                         self.experiment['shot_number'] += 1
                 else:
                     if self.experiment.get('name'):
-                        print "experiment ({}): completed".format(self.experiment['name'])
+                        print("experiment ({}): completed".format(self.experiment['name']))
                     self._advance_experiment()
             else:
                 self._advance_experiment()
@@ -905,16 +915,16 @@ class ConductorServer(ThreadedServer):
                 name = self.experiment.get('name')
                 shot_number = self.experiment.get('shot_number')
                 if self.experiment.get('loop'):
-                    print "experiment ({}): shot {}".format(name, shot_number + 1)
+                    print("experiment ({}): shot {}".format(name, shot_number + 1))
                 elif (shot_number is not None):
-                    print "experiment ({}): shot {} of {}".format(name, 
+                    print("experiment ({}): shot {} of {}".format(name, )
                             shot_number + 1, remaining_points + shot_number)
             else:
                 self._advance_parameter_values(suppress_errors=suppress_errors)
             self._update_parameters(suppress_errors=suppress_errors)
             tf = time.time()
             if self.verbose:
-                print 'advanced in {} s'.format(tf - ti)
+                print('advanced in {} s'.format(tf - ti))
         except:
             if not suppress_errors:
                 raise
@@ -1024,7 +1034,15 @@ class ConductorServer(ThreadedServer):
     def _send_update(self, update):
         update_json = json.dumps(update, default=lambda x: None)
         self.update(update_json)
+
+    def connect_to_labrad(self, ):
+        self.cxn = labrad.connect()
+        print("Conductor connected to Sequencer")
     
+    def _check_sequencer(self):
+        isbusy = json.loads(self.cxn.sequencer.is_busy(wait=True))
+        return any(isbusy.values())
+
 Server = ConductorServer
 
 if __name__ == "__main__":

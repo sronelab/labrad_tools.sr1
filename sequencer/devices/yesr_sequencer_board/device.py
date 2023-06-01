@@ -184,7 +184,8 @@ class YeSrSequencerBoard(DefaultDevice):
         # Rewrite if the previous and the current parameter_values are different. 
         if (parameter_values != self.parameter_values_previous) | (raw_sequence != self.raw_sequence_previous):
             print("Rewriting the sequence...")
-            self.is_device_writing =True
+            self.is_device_writing = True
+            
             ti = time.time()
             programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
             sequence_bytes = self.make_sequence_bytes(programmable_sequence)
@@ -196,6 +197,8 @@ class YeSrSequencerBoard(DefaultDevice):
             self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
             self.set_loading(False)
             print(" took {} seconds".format(time.time()-ti))
+            
+            self.is_device_writing = False
         else:
             print("Skip rewriting the sequence. Parameter values are the same.")
             self.is_device_writing = False

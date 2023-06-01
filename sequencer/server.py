@@ -227,13 +227,14 @@ class SequencerServer(DeviceServer):
         return response
     
     @setting(16)
-    def is_device_writing(self, c, request_json='{}'):
+    def is_busy(self, c, request_json='{}'):
         request = json.loads(request_json)
-        response = self._is_device_writing(request)
+        response = self._are_devices_writing(request)
         response_bool = any(response.values())
-        return response_bool
+        response_json = json.dumps(response)
+        return response_json
 
-    def _is_device_writing(self, request={}):
+    def _are_devices_writing(self, request={}):
         if request == {}:
             request = {device_name: None for device_name in self.devices}
 

@@ -5,13 +5,17 @@ import os
 import h5py
 import pickle
 
+
 from conductor.parameter import ConductorParameter
 
 from andor_server.proxy import AndorProxy
 
+from twisted.internet.reactor import callInThread
+
 class RecordPath(ConductorParameter):
-    autostart = True
-    priority = 1
+    name = "Andor"
+    autostart = False
+    priority = 12
     # call_in_thread = True
     record_types = {
         "readout_pmt":"fluorescence",
@@ -48,7 +52,7 @@ class RecordPath(ConductorParameter):
         andor.CoolerON()
         
         self._andor = andor
-    
+
     @property
     def value(self):
         """
@@ -81,40 +85,43 @@ class RecordPath(ConductorParameter):
 
 
     def update(self):
-        sequence = self.server.parameters.get('sequencer.sequence')
-        previous_sequence = self.server.parameters.get('sequencer.previous_sequence')
-        record_type = None
-        sequence_value = None
+        if self.value is not None:
+            sequence = self.server.parameters.get('sequencer.sequence')
+            previous_sequence = self.server.parameters.get('sequencer.previous_sequence')
+            record_type = None
+            sequence_value = None
 
-        if sequence.loop:
-            sequence_value = previous_sequence.value
-        else:
-            sequence_value = sequence.value
-        intersection = np.intersect1d(sequence_value, self.record_types.keys())
-        
-        if intersection != None:
-            record_type = self.record_types.get(intersection[-1])
+            if sequence.loop:
+                sequence_value = previous_sequence.value
+            else:
+                sequence_value = sequence.value
+            intersection = np.intersect1d(sequence_value, self.record_types.keys())
+            
+            if intersection != None:
+                record_type = self.record_types.get(intersection[-1])
 
-        print("Camera record_type: {}".format(record_type))
+            print("Camera record_type: {}".format(record_type))
 
-        if record_type == 'fluorescence':
-            self.num_kinetic_shots = 3
-            self.take_fluorescence_image()
-        elif record_type == 'fluorescence2D':
-            self.num_kinetic_shots = 3
-            self.take_fluorescence_image_2D()
-        elif record_type == 'fluorescence_double':
-            self.num_kinetic_shots = 3
-            self.take_fluorescence_image_double()
-        else:
-            print("Warning: record_type invalid.")
+            if record_type == 'fluorescence':
+                self.num_kinetic_shots = 3
+                callInThread(self.take_fluorescence_image)
+            elif record_type == 'fluorescence2D':
+                self.num_kinetic_shots = 3
+                callInThread(self.take_fluorescence_image_2D)
+            elif record_type == 'fluorescence_double':
+                self.num_kinetic_shots = 3
+                callInThread(self.take_fluorescence_image_double)
+            else:
+                print("Warning: record_type invalid.")
 
-        self.server._send_update({self.name: self.value})
+            self.server._send_update({self.name: self.value})
         
     def take_fluorescence_image(self):
         """
         Take 1D image.
         """
+        data_path = os.path.join(self.data_directory, self.value)
+
         andor = self._andor
         andor.AbortAcquisition()
         # Acquisition settings
@@ -154,7 +161,6 @@ class RecordPath(ConductorParameter):
         time_start_write = time.time()
 
         # Write data
-        data_path = os.path.join(self.data_directory, self.value)
         data_directory = os.path.dirname(data_path)
         if not os.path.isdir(data_directory):
             os.makedirs(data_directory)
