@@ -917,8 +917,8 @@ class ConductorServer(ThreadedServer):
                 if self.experiment.get('loop'):
                     print("experiment ({}): shot {}".format(name, shot_number + 1))
                 elif (shot_number is not None):
-                    print("experiment ({}): shot {} of {}".format(name, )
-                            shot_number + 1, remaining_points + shot_number)
+                    print("experiment ({}): shot {} of {}".format(name, 
+                            shot_number + 1, remaining_points + shot_number))
             else:
                 self._advance_parameter_values(suppress_errors=suppress_errors)
             self._update_parameters(suppress_errors=suppress_errors)
