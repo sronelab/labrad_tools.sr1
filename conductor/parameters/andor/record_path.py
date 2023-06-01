@@ -10,12 +10,11 @@ from conductor.parameter import ConductorParameter
 
 from andor_server.proxy import AndorProxy
 
-from twisted.internet.reactor import callInThread
 
 class RecordPath(ConductorParameter):
     name = "Andor"
     autostart = False
-    priority = 12
+    priority = 1
     # call_in_thread = True
     record_types = {
         "readout_pmt":"fluorescence",
@@ -104,13 +103,13 @@ class RecordPath(ConductorParameter):
 
             if record_type == 'fluorescence':
                 self.num_kinetic_shots = 3
-                callInThread(self.take_fluorescence_image)
+                self.take_fluorescence_image()
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3
-                callInThread(self.take_fluorescence_image_2D)
+                self.take_fluorescence_image_2D()
             elif record_type == 'fluorescence_double':
                 self.num_kinetic_shots = 3
-                callInThread(self.take_fluorescence_image_double)
+                self.take_fluorescence_image_double()
             else:
                 print("Warning: record_type invalid.")
 
