@@ -6,8 +6,8 @@ class ProbeDetuning(ConductorParameter):
     call_in_thread = False
 
     def initialize(self,config):
-	self.connect_to_labrad()
-	self.value =-235623697.25
+        self.connect_to_labrad()
+        self.value =-235623697.25
 
     def update(self):
         if self.value is not None:

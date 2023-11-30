@@ -28,6 +28,7 @@ class Recorder(ConductorParameter):
 	'readout_pmt_comparison',
 	'readout_pmt_2Dimg',
 	'readout_pmt_MOT',
+    "readout_nz0",
         ]
 
     def initialize(self, config):
