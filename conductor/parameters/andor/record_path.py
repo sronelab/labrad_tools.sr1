@@ -108,9 +108,7 @@ class RecordPath(ConductorParameter):
                 # send data to the proxy instance.       
                 shotnumber = self.server.experiment.get('shot_number')
                 experiment_name = self.server.experiment.get('name')
-                point_filename = "{}_{}".format(experiment_name, shotnumber)
-                data = {point_filename:{"frac":frac, "tot":tot}}
-                self._andor.update_records(data)
+                self._andor.update_records(experiment_name, shotnumber, frac, tot)
 
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3

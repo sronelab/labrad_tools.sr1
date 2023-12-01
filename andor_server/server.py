@@ -496,9 +496,9 @@ class AndorServer(LabradServer):
         return error_code
     
     @setting(72)
-    def update_records(self, data):
+    def update_records(self, point_filename, frac, tot):
         """ Update records."""
-        data = json.loads(data)
+        data = {point_filename:{"frac":frac, "tot":tot}}
         if len(self.records) > self.max_records:
             self.records.popleft()
             self.records.append(data)

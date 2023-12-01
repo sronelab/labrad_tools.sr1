@@ -73,9 +73,10 @@ class AndorProxy(object):
         if self.verbose:
             print "{}: {}".format(function, ERROR_CODE[error])
 
-    def update_records(self, data):
+    def update_records(self, experiment_name, shotnumber, frac, tot):
         """ Send data to andor server"""
-        self.andor_server.update_records(json.dumps(data))
+        point_filename = "{}_{}".format(experiment_name, shotnumber)
+        self.andor_server.update_records(point_filename, frac, tot)
     
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """
