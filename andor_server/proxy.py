@@ -75,7 +75,8 @@ class AndorProxy(object):
 
     def update_records(self, point_filename, frac, tot):
         """ Send data to andor server"""
-        self.andor_server.update_records("{}|{}|".format(point_filename, frac, tot))
+        data = {point_filename:{"frac":frac, "tot":tot}}
+        self.andor_server.update_records(json.dumps(data))
     
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """

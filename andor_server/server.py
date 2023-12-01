@@ -27,7 +27,7 @@ class AndorServer(LabradServer):
 
     # for the clock servo. stroing recent 100 data with its filenames.
     records = deque([])
-    max_records = 100
+    max_records = 20
 
     def initServer(self):
         global andor
@@ -495,17 +495,16 @@ class AndorServer(LabradServer):
         error_code = andor.error['WaitForAcquisitionTimeOut']
         return error_code
     
-    @setting(72)
-    def update_records(self, data):
+    @setting(72, data="s")
+    def update_records(self, c, data):
         """ Update records."""
-        print(data)
-        # data = json.loads(data)
-        # if len(self.records) > self.max_records:
-        #     self.records.popleft()
-        #     self.records.append(data)
+        data = json.loads(data)
+        if len(self.records) > self.max_records:
+            self.records.popleft()
+        self.records.append(data)
 
     @setting(73)
-    def retrieve_records(self):
+    def retrieve_records(self, c):
         """ Retrieve stored records. """
         _records = {}
         for record in self.records: # convert list to dict
