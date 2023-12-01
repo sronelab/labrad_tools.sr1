@@ -47,37 +47,34 @@ class FeedbackPoint(ConductorParameter):
             control_loop = self._get_lock(name)
 
 
-            #PMT processing
+            # #PMT processing
             # point_filename = '{}.blue_pmt'.format(shot)
             # point_path = os.path.join(experiment_name, point_filename)
 
-            #request = {'blue_pmt': point_path}
-            #response_json = self.cxn.pmt.retrive_records(json.dumps(request))
-            #response = json.loads(response_json)
-            #frac = response['blue_pmt']['frac_fit']
-            #tot = response['blue_pmt']['tot_fit']
+            # request = {'blue_pmt': point_path}
+            # response_json = self.cxn.pmt.retrive_records(json.dumps(request))
+            # response = json.loads(response_json)
+            # frac = response['blue_pmt']['frac_fit']
+            # tot = response['blue_pmt']['tot_fit']
+
+            # print("resonse:", response)
+            # print("frac", frac)
+            # print("tot", tot)
+
 
             #Andor processing
-            point_filename = '{}.andor'.format(shot)
-            point_path = os.path.join(experiment_name, point_filename)
+            frac_dict = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.frac":None})))
+            frac = frac_dict['andor.frac']
+            tot_dict = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.tot":None})))
+            tot= tot_dict['andor.tot']
+            print("frac", frac)
+            print("tot", tot)
 
-            request = {'andor': point_path}
-            response_json = self.cxn.pmt.retrive_records(json.dumps(request))
-            response = json.loads(response_json)
-            #separate shots
-            gg=sum(response['andor']['g'])
-            ee=sum(response['andor']['e'])
-            bg=sum(response['andor']['bg'])
-            #calculate total
-            tot=gg+ee-2*bg
 
             #if there are atoms, do servo on excitation fraction
-            if tot > control_loop.tot_cutoff:
+            # if tot > control_loop.tot_cutoff:
 
-                #this line only for andor (best to do checking if there are atoms for andor files to avoid div by zero error)
-                frac=ee/tot
-
-                control_loop.tick(side, frac)
+            control_loop.tick(side, frac)
 
             request = {'clock_servo.control_signals.{}'.format(name): control_loop.output}
             self.server._set_parameter_values(request)

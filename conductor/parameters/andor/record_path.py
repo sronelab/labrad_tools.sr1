@@ -47,11 +47,7 @@ class RecordPath(ConductorParameter):
         andor.verbose=False
 
         andor.Initialize()
-        andor.SetFanMode(2) # 2 for off
-        andor.SetTemperature(-70)
-        andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
-        andor.CoolerON()
-        
+                
         self._andor = andor
 
     @property

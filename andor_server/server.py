@@ -28,6 +28,15 @@ class AndorServer(LabradServer):
         andor = Andor()
         andor.Initialize()
         super(AndorServer, self).initServer()
+
+        print("Initializing camera ...")
+        andor.SetTemperature(-70)
+        andor.CoolerON()
+        andor.SetFanMode(2) # 2 for off
+        andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
+
+        print("Is cooler on?: ", andor.IsCoolerOn())
+        print("Temperature: ", str(andor.GetTemperature()))        
     
     def stopServer(self):
         andor.ShutDown()
