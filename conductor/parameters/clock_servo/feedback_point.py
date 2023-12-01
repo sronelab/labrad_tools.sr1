@@ -67,6 +67,7 @@ class FeedbackPoint(ConductorParameter):
             point_filename = "{}_{}".format(experiment_name, shot)
 
             andor_records = self.cxn.yecookiemonster_andor.retrieve_records()
+            andor_records = json.loads(andor_records)
             
             # decipher the given dictionary...
             frac = andor_records[point_filename]["frac"]

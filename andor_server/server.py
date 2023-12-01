@@ -19,6 +19,7 @@ from labrad.server import LabradServer, setting
 
 from andor_server.andor import Andor
 from collections import deque
+import json
 
 class AndorServer(LabradServer):
     """ Provides access to andor camera using pyandor """
@@ -495,20 +496,21 @@ class AndorServer(LabradServer):
         return error_code
     
     @setting(72)
-    def update_records(self, data:dict):
+    def update_records(self, data):
         """ Update records."""
+        data = json.loads(data)
         if len(self.records) > self.max_records:
             self.records.popleft()
             self.records.append(data)
 
     @setting(73)
     def retrieve_records(self):
-        """ Retrieve stored records. Returns `dict`. """
+        """ Retrieve stored records. """
         _records = {}
         for record in self.records: # convert list to dict
             _key = record.keys()[0]
             _records[_key] = record[_key]
-        return _records
+        return json.dumps(_records)
 
 Server = AndorServer
 
