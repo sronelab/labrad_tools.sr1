@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from collections import deque
 
 ERROR_CODE = {
     20001: "DRV_ERROR_CODES",
@@ -71,6 +72,10 @@ class AndorProxy(object):
         if self.verbose:
             print "{}: {}".format(function, ERROR_CODE[error])
 
+    def update_records(self, data:dict):
+        """ Send data to andor server"""
+        self.andor_server.update_records(data)
+    
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """
         error = self.andor_server.abort_acquisition(self.serial_number)

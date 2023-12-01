@@ -41,9 +41,6 @@ class RecordPath(ConductorParameter):
 
     num_kinetic_shots = None
 
-    # for the clock servo
-    records = deque([])
-    max_records = 16
 
     def initialize(self, config):
         super(RecordPath, self).initialize(config)
@@ -108,23 +105,13 @@ class RecordPath(ConductorParameter):
                 self.num_kinetic_shots = 3
                 frac, tot = self.take_fluorescence_image()
 
-                # store data for the clock servo        
-                # send all last 16 data to the parameter values! 
-                # the dictionary will be sent as a longggg string, which can be parsed to `dict` with `json.loads()`
-                # Hope one can find a better method for doing this. e.g. save data on a different server, and make proper `retreive_records` method like the pmt server.         
-                if len(self.records) > self.max_records:
-                    self.records.popleft()
+                # send data to the proxy instance.       
                 shotnumber = self.server.experiment.get('shot_number')
                 experiment_name = self.server.experiment.get('name')
                 point_filename = "{}_{}".format(experiment_name, shotnumber)
-                self.records.append({point_filename:{"frac":frac, "tot":tot}})
-                _records = {}
-                for record in self.records: # convert list to dict
-                    _key = record.keys()[0]
-                    _records[_key] = record[_key]
-                self.server._set_parameter_values({"andor.records":json.dumps(_records)})
+                data = {point_filename:{"frac":frac, "tot":tot}}
+                self._andor.update_records(data)
 
-            
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_2D()
@@ -217,9 +204,9 @@ class RecordPath(ConductorParameter):
         print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
 
         # process data for the clock servo
-        ee = np.sum(temp_image_e)
-        gg = np.sum(temp_image_g)
-        bg = np.sum(temp_image_bg)
+        ee = np.sum(temp_image_e[50:300])
+        gg = np.sum(temp_image_g[50:300])
+        bg = np.sum(temp_image_bg[50:300])
         tot = ee + gg - 2*bg
         frac = (ee - bg) / tot
 

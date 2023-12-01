@@ -18,10 +18,15 @@ timeout = 5
 from labrad.server import LabradServer, setting
 
 from andor_server.andor import Andor
+from collections import deque
 
 class AndorServer(LabradServer):
     """ Provides access to andor camera using pyandor """
     name = '%LABRADNODE%_andor'
+
+    # for the clock servo. stroing recent 100 data with its filenames.
+    records = deque([])
+    max_records = 100
 
     def initServer(self):
         global andor
@@ -488,6 +493,22 @@ class AndorServer(LabradServer):
         andor.WaitForAcquisitionTimeOut(iTimeOutMs)
         error_code = andor.error['WaitForAcquisitionTimeOut']
         return error_code
+    
+    @setting(72)
+    def update_records(self, data:dict):
+        """ Update records."""
+        if len(self.records) > self.max_records:
+            self.records.popleft()
+            self.records.append(data)
+
+    @setting(73)
+    def retrieve_records(self):
+        """ Retrieve stored records. Returns `dict`. """
+        _records = {}
+        for record in self.records: # convert list to dict
+            _key = record.keys()[0]
+            _records[_key] = record[_key]
+        return _records
 
 Server = AndorServer
 

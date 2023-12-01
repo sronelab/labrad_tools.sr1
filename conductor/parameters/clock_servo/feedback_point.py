@@ -63,23 +63,19 @@ class FeedbackPoint(ConductorParameter):
 
 
             # Andor processing
-            # print(name)
-            # print(shot)
-            # point_filename = "{}_{}".format(name, shot)
-            # print(point_filename)
             experiment_name = self.server.experiment.get('name')
             point_filename = "{}_{}".format(experiment_name, shot)
+
+            andor_records = self.cxn.yecookiemonster_andor.retrieve_records()
             
             # decipher the given dictionary...
-            andor_records = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.records":None})))
-            andor_records = json.loads(andor_records["andor.records"])
             frac = andor_records[point_filename]["frac"]
             tot = andor_records[point_filename]["tot"]
 
             #if there are atoms, do servo on excitation fraction
             # if tot > control_loop.tot_cutoff:
-
-            control_loop.tick(side, frac)
+            if (frac > 0.0) & (frac < 1.0):
+                control_loop.tick(side, frac)
 
             request = {'clock_servo.control_signals.{}'.format(name): control_loop.output}
             self.server._set_parameter_values(request)
