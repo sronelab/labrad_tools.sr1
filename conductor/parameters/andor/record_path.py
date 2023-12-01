@@ -4,6 +4,7 @@ import time
 import os
 import h5py
 import pickle
+from collections import deque
 
 
 from conductor.parameter import ConductorParameter
@@ -39,6 +40,10 @@ class RecordPath(ConductorParameter):
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
 
     num_kinetic_shots = None
+
+    # for the clock servo
+    records = deque([])
+    max_records = 16
 
     def initialize(self, config):
         super(RecordPath, self).initialize(config)
@@ -101,7 +106,25 @@ class RecordPath(ConductorParameter):
 
             if record_type == 'fluorescence':
                 self.num_kinetic_shots = 3
-                self.take_fluorescence_image()
+                frac, tot = self.take_fluorescence_image()
+
+                # store data for the clock servo        
+                # send all last 16 data to the parameter values! 
+                # the dictionary will be sent as a longggg string, which can be parsed to `dict` with `json.loads()`
+                # Hope one can find a better method for doing this. e.g. save data on a different server, and make proper `retreive_records` method like the pmt server.         
+                if len(self.records) > self.max_records:
+                    self.records.popleft()
+                shotnumber = self.server.experiment.get('shot_number')
+                experiment_name = self.server.experiment.get('name')
+                point_filename = "{}_{}".format(experiment_name, shotnumber)
+                self.records.append({point_filename:{"frac":frac, "tot":tot}})
+                _records = {}
+                for record in self.records: # convert list to dict
+                    _key = record.keys()[0]
+                    _records[_key] = record[_key]
+                self.server._set_parameter_values({"andor.records":json.dumps(_records)})
+
+            
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_2D()
@@ -112,7 +135,7 @@ class RecordPath(ConductorParameter):
                 print("Warning: record_type invalid.")
 
             self.server._send_update({self.name: self.value})
-        
+    
     def take_fluorescence_image(self):
         """
         Take 1D image.
@@ -192,6 +215,16 @@ class RecordPath(ConductorParameter):
         print('Camera temp is (C): ' + str(andor.GetTemperature()))
         print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
         print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+
+        # process data for the clock servo
+        ee = np.sum(temp_image_e)
+        gg = np.sum(temp_image_g)
+        bg = np.sum(temp_image_bg)
+        tot = ee + gg - 2*bg
+        frac = (ee - bg) / tot
+
+        return frac, tot
+        
 
     def take_fluorescence_image_2D(self):
             # # Sr2 legacy

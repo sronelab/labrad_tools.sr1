@@ -62,14 +62,19 @@ class FeedbackPoint(ConductorParameter):
             # print("tot", tot)
 
 
-            #Andor processing
-            frac_dict = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.frac":None})))
-            frac = frac_dict['andor.frac']
-            tot_dict = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.tot":None})))
-            tot= tot_dict['andor.tot']
-            print("frac", frac)
-            print("tot", tot)
-
+            # Andor processing
+            # print(name)
+            # print(shot)
+            # point_filename = "{}_{}".format(name, shot)
+            # print(point_filename)
+            experiment_name = self.server.experiment.get('name')
+            point_filename = "{}_{}".format(experiment_name, shot)
+            
+            # decipher the given dictionary...
+            andor_records = json.loads(self.cxn.conductor.get_parameter_values(json.dumps({"andor.records":None})))
+            andor_records = json.loads(andor_records["andor.records"])
+            frac = andor_records[point_filename]["frac"]
+            tot = andor_records[point_filename]["tot"]
 
             #if there are atoms, do servo on excitation fraction
             # if tot > control_loop.tot_cutoff:
