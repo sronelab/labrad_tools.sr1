@@ -24,6 +24,7 @@ class RecordPath(ConductorParameter):
         "readout_pmt_2Dimg":"fluorescence2D",
 	    "readout_pmt_MOT": "fluorescence",
         "readout_pmt_double":"fluorescence_double",
+        "take_one_image_vac_lifetime":"fluorescence2D_single_image"
         }
     record_sequences = [
         'readout_pmt',
@@ -31,7 +32,8 @@ class RecordPath(ConductorParameter):
         "readout_pmt_2Dimg",
         "readout_pmtTRIG",
 	    "readout_pmt_MOT",
-        "readout_pmt_double"
+        "readout_pmt_double",
+        "take_one_image_vac_lifetime"
         ]
 
     data_filename = '{}.andor.json'
@@ -40,7 +42,8 @@ class RecordPath(ConductorParameter):
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
 
     num_kinetic_shots = None
-
+    compression = 'gzip'
+    compression_level = 4
 
     def initialize(self, config):
         super(RecordPath, self).initialize(config)
@@ -117,6 +120,8 @@ class RecordPath(ConductorParameter):
             elif record_type == 'fluorescence_double':
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_double()
+            elif record_type == 'fluorescence2D_single_image':
+                self.take_fluorescence_image_2D_oneshot()
             else:
                 print("Warning: record_type invalid.")
 
@@ -148,7 +153,7 @@ class RecordPath(ConductorParameter):
         andor.SetPreAmpGain(preamp_gain)
         
         andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(290, 100) 
+        andor.SetSingleTrack(371, 160) 
 
         
         # Restart the cooler if the temperature of the camera is too high.
@@ -210,7 +215,76 @@ class RecordPath(ConductorParameter):
         frac = (ee - bg) / tot
 
         return frac, tot
-        
+    
+    def take_fluorescence_image_2D_oneshot(self):
+            """Take a single full ROI 2D image for vacuum lifetime measurement"""
+            # # Sr2 legacy
+            andor = self._andor
+
+            andor.AbortAcquisition()
+            # Acquisition settings
+            andor.SetOutputAmplifier(0)
+            andor.SetEMGainMode(2) # Linear gain mode.
+            andor.SetEMCCDGain(50)
+            exposure_time = 0.01
+            andor.SetExposureTime(exposure_time)
+            andor.SetShutter(1, 1, 0, 0) # open shutter
+            andor.SetHSSpeed(0, 0)
+            andor.SetVSSpeed(1)
+            andor.SetTriggerMode(1) #external
+            andor.SetAcquisitionMode(3)
+            andor.SetNumberKinetics(1)
+            andor.SetBaselineClamp(0)
+            preamp_gain = 2
+            andor.SetPreAmpGain(preamp_gain)
+            
+            andor.SetReadMode(4) # image mode
+            # andor.SetImage(1, 1, 1, 512, 241, 440)
+            andor.SetImage(16, 16, 1, 512, 1, 512) # full image
+
+            andor.StartAcquisition()
+            timeout_ms = 120000
+            andor.WaitForAcquisitionTimeOut(timeout_ms)
+
+            data = andor.GetAcquiredData(32*32).reshape(32, 32)
+            images = {"image": data}
+
+            dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_2D_singleshot.hdf5")
+
+            data_path = os.path.join(self.data_directory, self.value[:-5]+'.hdf5') # convert .json to .hdf5
+            data_directory = os.path.dirname(data_path)
+            if not os.path.isdir(data_directory):
+                os.makedirs(data_directory)
+
+            #Save data
+            cam_infos = {
+            'time': time.time(),
+            'camera_temp': andor.GetTemperature(),
+            'emccd_gain': andor.GetEMCCDGain(),
+            'preamp_gain': preamp_gain,
+            'exposure_time': exposure_time,
+            }
+
+            with h5py.File(data_path, "w") as h5f:
+                for image in images:
+                    h5f.create_dataset(image, data=images[image], 
+                            compression=self.compression, 
+                            compression_opts=self.compression_level)
+                # save camera info
+                for cam_info in cam_infos:
+                    h5f.create_dataset(cam_info, data=cam_infos[cam_info])
+
+            #Save dummy data for live plotting
+            with h5py.File(dummy_data_path, "w") as h5f:
+                for image in images:
+                    h5f.create_dataset(image, data=images[image], 
+                            compression=self.compression, 
+                            compression_opts=self.compression_level)
+
+            print(data_path)
+            print('Camera temp is (C): ' + str(andor.GetTemperature()))
+            print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
+            print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
 
     def take_fluorescence_image_2D(self):
             # # Sr2 legacy
@@ -235,7 +309,7 @@ class RecordPath(ConductorParameter):
             
             andor.SetReadMode(4) # image mode
             # andor.SetImage(1, 1, 1, 512, 241, 340)
-            andor.SetImage(1, 1, 1, 512, 251, 330)
+            andor.SetImage(1, 1, 1, 512, 270, 470)
 
             andor.StartAcquisition()
             timeout_ms = 60000
@@ -350,7 +424,7 @@ class RecordPath(ConductorParameter):
         andor.SetPreAmpGain(preamp_gain)
         
         andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(290, 100) 
+        andor.SetSingleTrack(371, 100) 
 
         
         # Restart the cooler if the temperature of the camera is too high.
