@@ -25,6 +25,12 @@ class ProbeDetuningMF(ConductorParameter):
             request = {'si_demod': {}} 
             mjm_comb_demod = self.server._get_parameter_values(request, all=False)['si_demod']
 
+            #get frequency detunings from sequencer for state preparation
+            request = {'f_9_7': {}} 
+            f_9_7 = self.server._get_parameter_values(request, all=False)['f_9_7']
+            request = {'f_7_5': {}} 
+            f_7_5 = self.server._get_parameter_values(request, all=False)['f_7_5']
+
             mF_value = self.value
 
 
@@ -59,6 +65,7 @@ class ProbeDetuningMF(ConductorParameter):
 #	    f_steer = f_fnc/2.0 -f_vco + f_aom_2
 	    f_fnc += (-f_steer - f_aom_2)*2
 	    f_steer = f_steer + f_aom_2
+            #f_steer_9_7=f_steer+f_9_7
 
 #            f_fnc += (100.e6-f_steer)*2.
 #            f_steer =  100.e6-f_steer
@@ -69,6 +76,12 @@ class ProbeDetuningMF(ConductorParameter):
             request = {
                     'clock_mF.hr_frequency_mF': float(f_steer), 
                     'clock_mF.hr_demod_frequency_mF': float(f_fnc),
+                    'clock_mF.hr_frequency_top_dds': float(f_steer), 
+                    'clock_mF.hr_demod_top_dds': float(f_fnc),
+                    'clock_mF.hr_frequency_9_7': float(f_9_7), 
+                    'clock_mF.hr_demod_9_7': float(f_fnc),
+                    'clock_mF.hr_frequency_7_5': float(f_7_5), 
+                    'clock_mF.hr_demod_7_5': float(f_fnc),
                     }
             self.server._set_parameter_values(request)
 

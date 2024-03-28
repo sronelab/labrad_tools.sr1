@@ -211,6 +211,37 @@ class RFServer(DeviceServer):
         response = device.get_linear_ramp()
         return response
     
+    @setting(16)
+    def dicfrequencies(self, c, request_json='{}'):
+        """ get or update device frequencies """
+        request = json.loads(request_json)
+        response = self._dicfrequencies(request)
+        response_json = json.dumps(response)
+        return response_json
+        
+    def _dicfrequencies(self, request):
+        if request == {}:
+            active_devices = self._get_active_devices()
+            request = {device_name: None for device_name in active_devices}
+        response = {}
+        for device_name, frequency in request.items():
+            device_response = None
+            try:
+                device_response = self._dicfrequency(device_name, frequency)
+            except:
+                self._reload_device(device_name, {})
+                device_response = self._dicfrequency(device_name, frequency)
+            response.update({device_name: device_response})
+        self._send_update({'frequencies': response})
+        return response
+
+    def _dicfrequency(self, name, frequency):
+        device = self._get_device(name)
+        if frequency:
+            device.set_frequency(**frequency)
+        response = device.get_frequency()
+        return response
+    
 Server = RFServer
 
 if __name__ == "__main__":

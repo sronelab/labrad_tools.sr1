@@ -44,9 +44,14 @@ class AD9956(DefaultDevice):
     fsrr_reg = int(0x05)
     flow_reg = int(0x06)
     fhigh_reg = int(0x07)
-       
+    extra_regs=[int(0x08), int(0x09), int(0x0A), int(0x0B), int(0x0C), int(0x0D)]
+
+
+
+    ramprate=None
     frequency_low = None
     frequency_high = None
+    extra_freqs=[None, None, None, None, None, None]
     default_frequency = 0
     frequency_range = [0, sysclk / 2]
 
@@ -187,6 +192,7 @@ class AD9956(DefaultDevice):
         """
         if rate == None:
             rate = 1
+        self.ramprate=rate
         if stop >= start:
             ftw_start = self.make_ftw(start) #Write start frequency to pcr0
             ftw_stop = self.make_ftw(stop) #Write stop frequency to pcr1
@@ -208,14 +214,14 @@ class AD9956(DefaultDevice):
             self.ser.write(command)
 #            self.serial_server.write(self.serial_address, command)
         else:
-            message = "End frequency must be greater than start frequency."
+            message = "End frequency must be greater than start frequency in current set up."
             raise Exception(message)
 
     def get_linear_ramp(self):
         # could retunr start stop rate here
         return None
 
-    def set_frequency(self, frequency, board=-1, output='low'):
+    def set_frequency(self, frequency, board=-1, output=None):
         """ select single frequency output mode at specified frequency
 
         Args:
@@ -226,6 +232,10 @@ class AD9956(DefaultDevice):
         # overwrite board if no input
         if board == -1:
             board = self.board_num
+        
+        #overwrite output if no input
+        if output == None:
+            output='low'
 
         min_freq = min(self.frequency_range)
         max_freq = max(self.frequency_range)
@@ -243,20 +253,57 @@ class AD9956(DefaultDevice):
                 get_instruction_set(board, self.cfr1_reg, cfr1w)
                 + get_instruction_set(board, self.fhigh_reg, ftw)
                 )
-        else:
+        elif output =='low':
             instruction_set = (
                 get_instruction_set(board, self.cfr1_reg, cfr1w)
                 + get_instruction_set(board, self.flow_reg, ftw)
-                )        
+                )
+        else:
+            instruction_set = (
+                get_instruction_set(board, self.cfr1_reg, cfr1w)
+                + get_instruction_set(board, self.extra_regs[output], ftw)
+                )       
         command = ''.join(instruction_set)
         self.ser.write(command)
 #        self.serial_server.write(self.serial_address, command)
         
         if output == 'low':
             self.frequency_low = frequency
-        else:
+        elif output == 'high':
             self.frequency_high = frequency
+        elif (0 <= output and 6 > output ):
+            self.extra_freqs[output] = frequency
+        else:
+            message = ("Specified output channel is out of range")
+            raise Exception(message)
 
+
+    def set_ramprate(self, rate):
+        """
+        set ramp conditions in operation where cfrw1 is rewritten via a trigger to initiate ramp mode
+        
+        Args: rate -- integer rate which determines frequency step size and time delay between steps (see command generation functions 
+        called below. )
+        """
+        self.ramprate=rate
+        if (rate > -2**16 and rate < 2**24):
+            cfr1w = self.make_cfr1w('single') #keep single mode for TTL triggering to ramp mode, what this set_ramprate function is used fo
+            rsrr = self.make_rsrrw(rate)
+            fsrr = self.make_fsrrw(rate)
+            rdw = self.make_rdftw(rate)
+            fdw = self.make_fdftw(rate)
+            instruction_set = (
+                get_instruction_set(self.board_num, self.cfr1_reg, cfr1w)
+                + get_instruction_set(self.board_num, self.rdftw_reg, rdw)
+                + get_instruction_set(self.board_num, self.fdftw_reg, fdw)
+                + get_instruction_set(self.board_num, self.rsrr_reg, rsrr)
+                + get_instruction_set(self.board_num, self.fsrr_reg, fsrr)
+            )
+            command = ''.join(instruction_set)
+            self.ser.write(command)
+        else:
+            message = "ramp rate out of range"
+            raise Exception(message)
 
     def get_frequency(self, output='low'):
         """ get programmed freqeuncy
@@ -271,7 +318,19 @@ class AD9956(DefaultDevice):
             frequency = self.frequency_low
         elif output == 'high':
             frequency = self.frequency_high
+        elif (0 <= output and 6 > output ):
+            frequency =self.extra_freqs[output]
         else: 
-            message = 'output selection: {} is not either "high" or "low"'
+            message = 'output selection: {} is not either "high" or "low" or less than 6'
             raise Exception(message)
         return frequency
+
+    def get_ramprate(self):
+        """ get programmed freqeuncy
+
+        Args: 
+            None
+        Returns:
+            frequency: ramp rate
+        """
+        return self.ramprate

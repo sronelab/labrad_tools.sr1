@@ -166,7 +166,7 @@ class RecordPath(ConductorParameter):
 
         # Start acquisition and get images
         andor.StartAcquisition()
-        timeout_ms = 60000
+        timeout_ms = 180000
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
         time_start_write = time.time()
@@ -439,7 +439,7 @@ class RecordPath(ConductorParameter):
         # First shot
         ti = time.time()
         andor.StartAcquisition()
-        timeout_ms = 60000
+        timeout_ms = 3*60000
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three_num = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
         time_start_write = time.time()
