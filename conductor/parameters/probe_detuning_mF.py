@@ -25,11 +25,13 @@ class ProbeDetuningMF(ConductorParameter):
             request = {'si_demod': {}} 
             mjm_comb_demod = self.server._get_parameter_values(request, all=False)['si_demod']
 
-            #get frequency detunings from sequencer for state preparation
+            #get frequency detunings from sequencer for state preparation--seems to not be dynamic? but it worked before...
             request = {'f_9_7': {}} 
             f_9_7 = self.server._get_parameter_values(request, all=False)['f_9_7']
             request = {'f_7_5': {}} 
             f_7_5 = self.server._get_parameter_values(request, all=False)['f_7_5']
+            request = {'f_5_3': {}} 
+            f_5_3 = self.server._get_parameter_values(request, all=False)['f_5_3']
 
             mF_value = self.value
 
@@ -82,6 +84,8 @@ class ProbeDetuningMF(ConductorParameter):
                     'clock_mF.hr_demod_9_7': float(f_fnc),
                     'clock_mF.hr_frequency_7_5': float(f_7_5), 
                     'clock_mF.hr_demod_7_5': float(f_fnc),
+                    'clock_mF.hr_frequency_5_3': float(f_5_3), 
+                    'clock_mF.hr_demod_5_3': float(f_fnc),
                     }
             self.server._set_parameter_values(request)
 

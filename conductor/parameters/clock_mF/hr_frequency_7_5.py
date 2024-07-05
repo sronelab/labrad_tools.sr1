@@ -10,8 +10,8 @@ class HrFrequency_7_5(ConductorParameter):
     autostart = True
     priority = 2
     dark_frequency = 105e6
-    output_p=2 #register 3
-    output_m=3 #register 3
+    output_p=2 #register 4
+    output_m=3 #register 5
     
 
     def initialize(self,config):
@@ -29,7 +29,8 @@ class HrFrequency_7_5(ConductorParameter):
             f_7_5=self.value
             freq_p=f_steer+f_7_5
             freq_m=f_steer-f_7_5
-            print('clock_aom.hr_7_5_frequency detuning', freq_m, freq_p)
+            print('clock_aom.hr_7_5_frequency detuning', f_steer-freq_m, f_steer-freq_p)
+            print('f_7_5' , f_7_5)
 #            min_freq = min([self.value, self.dark_frequency])
 #            max_freq = max([self.value, self.dark_frequency])
 #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

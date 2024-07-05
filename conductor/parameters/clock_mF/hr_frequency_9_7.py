@@ -11,7 +11,7 @@ class HrFrequency_9_7(ConductorParameter):
     priority = 2
     dark_frequency = 100e6
     output_p=0 #corresponds to register 2
-    output_m=1
+    output_m=1 #corresponds to register 3
 
     def initialize(self,config):
         self.connect_to_labrad()

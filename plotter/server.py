@@ -73,6 +73,9 @@ class PlotterServer(ThreadedServer):
     name = 'plotter'
     is_plotting = False
 
+    # a field for silicon frequency. Clock comparision live update purpose.
+    frequency_si3 = None
+
     def initServer(self):
         """ socket server """
         url = u"ws://0.0.0.0:{}".format(WEBSOCKET_PORT)
@@ -103,6 +106,19 @@ class PlotterServer(ThreadedServer):
             module = imp.load_source(module_name, path)
             function = getattr(module, function_name)
             fig = function(settings)
+            # retrieve silicon frequency data for the clock lock
+            if function_name == "plot_clock_lock":
+                all_axes = fig.get_axes()
+                silicon_axes = all_axes[1, 0]
+                # x_data = []
+                y_data = []
+                for line in silicon_axes.get_lines():
+                    x, y = line.get_data()
+                    # x_data.append(x)
+                    y_data.append(y)
+                self.frequency_si3 = y_data[0][-1]
+                print("Si frequency: ",  self.frequency_si3)
+
             sio = StringIO.StringIO()
             fig.savefig(sio, format='svg')
             sio.seek(0)
@@ -121,6 +137,12 @@ class PlotterServer(ThreadedServer):
                 del figure_data
             except:
                 pass
+
+    @setting(1)
+    def retrieve_frquency_si3(self, c):
+        if self.frequency_si3 is not None:
+            return str(self.frequency_si3)
+
 
 Server = PlotterServer
 

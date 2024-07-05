@@ -20,6 +20,7 @@ class RecordPath(ConductorParameter):
     record_types = {
         "readout_pmt":"fluorescence",
         "readout_nz0":"fluorescence",
+        "readout_erasure":"fluorescence",
         "readout_pmtTRIG":"fluorescence",
         "readout_pmt_2Dimg":"fluorescence2D",
 	    "readout_pmt_MOT": "fluorescence",
@@ -28,6 +29,7 @@ class RecordPath(ConductorParameter):
         }
     record_sequences = [
         'readout_pmt',
+        'readout_erasure',
         "readout_nz0",
         "readout_pmt_2Dimg",
         "readout_pmtTRIG",
