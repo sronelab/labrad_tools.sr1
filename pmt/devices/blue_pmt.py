@@ -15,7 +15,7 @@ def fit_function(x, a):
 
 class BluePMT(Picoscope):
     raw_data_path = '/home/srgang/J/data/pmt_data' #Single data file is overwritten every cycle to save HD space
-    autostart = True
+    autostart = False
     picoscope_servername = 'yeelmo_picoscope'
     picoscope_serialnumber = 'DY149/147'
     picoscope_duration = 0.025e-3
