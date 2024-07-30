@@ -9,8 +9,8 @@ import numpy as np
 from conductor.parameter import ConductorParameter
 
 class Lattice_depth_ool(ConductorParameter):
-    priority = 8
-    autostart = False
+    priority = 2
+    autostart = True
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
     data_filename = '{}.lattice_depth'
 

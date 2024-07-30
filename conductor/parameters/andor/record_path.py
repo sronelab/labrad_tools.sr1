@@ -5,6 +5,7 @@ import os
 import h5py
 import pickle
 from collections import deque
+from twisted.internet.reactor import callInThread
 
 
 from conductor.parameter import ConductorParameter
@@ -136,35 +137,42 @@ class RecordPath(ConductorParameter):
         data_path = os.path.join(self.data_directory, self.value)
 
         andor = self._andor
-        andor.AbortAcquisition()
-        # Acquisition settings
-        andor.SetOutputAmplifier(0)
-        andor.SetEMGainMode(2) # Linear gain mode.
-        andor.SetEMCCDGain(50)
-        exposure_time = 0.001
-        andor.SetExposureTime(exposure_time)
-        andor.SetShutter(1, 1, 0, 0) # open shutter
-        andor.SetHSSpeed(0, 0)
-        andor.SetVSSpeed(1)
-        andor.SetTriggerMode(1) #external
-        andor.SetAcquisitionMode(3)
-        andor.SetNumberAccumulations(1)
-        andor.SetNumberKinetics(3)
-        andor.SetBaselineClamp(0)
+
         preamp_gain = 2
-        andor.SetPreAmpGain(preamp_gain)
+        exposure_time = 0.001
+
+
+        andor.AbortAcquisition()
+
+        ######################## Acquisition settings commented for more responsivity ##########################
+        # Acquisition settings
+        # andor.SetOutputAmplifier(0)
+        # andor.SetEMGainMode(2) # Linear gain mode.
+        # andor.SetEMCCDGain(50) #normally gain = 50
+        # andor.SetExposureTime(exposure_time)
+        # andor.SetShutter(1, 1, 0, 0) # open shutter
+        # andor.SetHSSpeed(0, 0)
+        # andor.SetVSSpeed(1)
+        # andor.SetTriggerMode(1) #external
+        # andor.SetAcquisitionMode(3)
+        # andor.SetNumberAccumulations(1)
+        # andor.SetNumberKinetics(3)
+        # andor.SetBaselineClamp(0)
+        # andor.SetPreAmpGain(preamp_gain)
         
-        andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(371, 160) 
+        # andor.SetReadMode(3) # single track mode
+        # andor.SetSingleTrack(371, 160) 
 
         
-        # Restart the cooler if the temperature of the camera is too high.
-        if float(andor.GetTemperature()) > 0:
-            print("Cooler restart.")
-            andor.SetFanMode(2) # 2 for off
-            andor.SetTemperature(-70)
-            andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
-            andor.CoolerON()
+        # # Restart the cooler if the temperature of the camera is too high.
+        # if float(andor.GetTemperature()) > 0:
+        #     print("Cooler restart.")
+        #     andor.SetFanMode(2) # 2 for off
+        #     andor.SetTemperature(-70)
+        #     andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
+        #     andor.CoolerON()
+        ########################################################################3#############################
+
 
         # Start acquisition and get images
         andor.StartAcquisition()
@@ -184,13 +192,17 @@ class RecordPath(ConductorParameter):
         temp_image_bg = temp_image_three[2*imlen:3*imlen]
 
         #data dictionary, add here if you want more stored values
+        T_cam = andor.GetTemperature()
+        emccd_gain = andor.GetEMCCDGain()
+        preamp_gain = andor.GetNumberPreAmpGains()
+
         data_string = {
             'time': time_start_write,
             'g': temp_image_g.tolist(),
             'e': temp_image_e.tolist(),
             'bg': temp_image_bg.tolist(),
-            'camera_temp': str(andor.GetTemperature()),
-            'emccd_gain': str(andor.GetEMCCDGain()),
+            'camera_temp': str(T_cam),
+            'emccd_gain': str(emccd_gain),
             'preamp_gain': str(preamp_gain),
             'exposure_time': str(exposure_time),
             }
@@ -205,9 +217,9 @@ class RecordPath(ConductorParameter):
 
         # outputing the status
         print("Image saved to {}".format(data_path))
-        print('Camera temp is (C): ' + str(andor.GetTemperature()))
-        print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
-        print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
+        print('Camera temp is (C): ' + str(T_cam))
+        print('EMCCD gain: ' + str(emccd_gain))
+        print("PreAmp Gain: "+str(preamp_gain))
 
         # process data for the clock servo
         ee = np.sum(temp_image_e[50:300])

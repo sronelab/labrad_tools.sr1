@@ -62,7 +62,7 @@ class keysight34470aServer(LabradServer):
             self.inst.write('INIT')
             data = self.inst.ask("FETC?")
         except:
-            data = "NODATA"
+            data = "0.0"
 
         return data
     

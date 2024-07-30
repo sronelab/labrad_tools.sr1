@@ -32,7 +32,10 @@ class ProbeDetuningMF(ConductorParameter):
             f_7_5 = self.server._get_parameter_values(request, all=False)['f_7_5']
             request = {'f_5_3': {}} 
             f_5_3 = self.server._get_parameter_values(request, all=False)['f_5_3']
-
+            request = {'f_bsb_m': {}} 
+            f_bsb_m = self.server._get_parameter_values(request, all=False)['f_bsb_m']
+            request = {'f_bsb_p': {}} 
+            f_bsb_p = self.server._get_parameter_values(request, all=False)['f_bsb_p']
             mF_value = self.value
 
 
@@ -61,12 +64,12 @@ class ProbeDetuningMF(ConductorParameter):
 	    # Alex's modification 2022/02/02
 	    # for top clock path we have a 41MHz AOM
 	    
-	    f_aom_2 = 41.e6 #41 MHz + 1 order
-	    #f_fnc = 73.504e6 #(f_vco - f_aom_2)*2
-#	    f_fnc = f_fnc - 2*f_steer - f_aom_2*2
-#	    f_steer = f_fnc/2.0 -f_vco + f_aom_2
-	    f_fnc += (-f_steer - f_aom_2)*2
-	    f_steer = f_steer + f_aom_2
+            f_aom_2 = 41.e6 #41 MHz + 1 order
+            #f_fnc = 73.504e6 #(f_vco - f_aom_2)*2
+    #	    f_fnc = f_fnc - 2*f_steer - f_aom_2*2
+    #	    f_steer = f_fnc/2.0 -f_vco + f_aom_2
+            f_fnc += (-f_steer - f_aom_2)*2
+            f_steer = f_steer + f_aom_2
             #f_steer_9_7=f_steer+f_9_7
 
 #            f_fnc += (100.e6-f_steer)*2.
@@ -86,6 +89,9 @@ class ProbeDetuningMF(ConductorParameter):
                     'clock_mF.hr_demod_7_5': float(f_fnc),
                     'clock_mF.hr_frequency_5_3': float(f_5_3), 
                     'clock_mF.hr_demod_5_3': float(f_fnc),
+                    'clock_mF.hr_frequency_bsb_m': float(f_bsb_m), 
+                    'clock_mF.hr_frequency_bsb_p': float(f_bsb_p), 
+
                     }
             self.server._set_parameter_values(request)
 
