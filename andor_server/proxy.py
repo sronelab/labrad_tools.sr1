@@ -98,7 +98,7 @@ class AndorProxy(object):
         controlled in some models until the temperature reaches 0o. Control is 
         returned immediately to the calling application.
         """
-        error = self.andor_serber.cooler_off(self.serial_number)
+        error = self.andor_server.cooler_off(self.serial_number)
         self._log(sys._getframe().f_code.co_name, error)
         return
 
@@ -181,7 +181,7 @@ class AndorProxy(object):
             accumulate (float): valid accumulate cycle time in seconds
             kinetic (float): valid kinetic cycle time in seconds
         """
-        error, exposure, accumultate, kinetic = self.andor_server.get_acquisition_timings(
+        error, exposure, accumulate, kinetic = self.andor_server.get_acquisition_timings(
                 self.serial_number)
         self._log(sys._getframe().f_code.co_name, error)
         return exposure, accumulate, kinetic

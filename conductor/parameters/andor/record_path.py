@@ -51,12 +51,32 @@ class RecordPath(ConductorParameter):
     def initialize(self, config):
         super(RecordPath, self).initialize(config)
         self.connect_to_labrad()
-        andor = AndorProxy(self.cxn.yecookiemonster_andor)
-        andor.verbose=False
+        try:
+            andor = AndorProxy(self.cxn.yecookiemonster_andor)
+            andor.verbose=False
+            andor.Initialize()
+                    
+            self._andor = andor
+        except:
+            print("WARNING: Cannot connect to AndorProxy. Camera might not work")
+            self._andor = None
 
-        andor.Initialize()
-                
-        self._andor = andor
+        # default setting for 1D image
+        andor.SetOutputAmplifier(0)
+        andor.SetEMGainMode(2) # Linear gain mode.
+        andor.SetEMCCDGain(50) #normally gain = 50
+        andor.SetExposureTime(0.001)
+        andor.SetShutter(1, 1, 0, 0) # open shutter
+        andor.SetHSSpeed(0, 0)
+        andor.SetVSSpeed(1)
+        andor.SetTriggerMode(1) #external
+        andor.SetAcquisitionMode(3)
+        andor.SetNumberAccumulations(1)
+        andor.SetNumberKinetics(3)
+        andor.SetBaselineClamp(0)
+        andor.SetPreAmpGain(2)
+        andor.SetReadMode(3) # single track mode
+        andor.SetSingleTrack(376, 160)
 
     @property
     def value(self):
@@ -120,6 +140,13 @@ class RecordPath(ConductorParameter):
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_2D()
+
+                # send data to the proxy instance.       
+                shotnumber = self.server.experiment.get('shot_number')
+                experiment_name = self.server.experiment.get('name')
+                point_filename = "{}_{}".format(experiment_name, shotnumber)
+                self._andor.update_records(point_filename, 0.0, 0.0)
+
             elif record_type == 'fluorescence_double':
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_double()
@@ -145,11 +172,10 @@ class RecordPath(ConductorParameter):
         andor.AbortAcquisition()
 
         ######################## Acquisition settings commented for more responsivity ##########################
-        # Acquisition settings
         # andor.SetOutputAmplifier(0)
         # andor.SetEMGainMode(2) # Linear gain mode.
         # andor.SetEMCCDGain(50) #normally gain = 50
-        # andor.SetExposureTime(exposure_time)
+        # andor.SetExposureTime(0.001)
         # andor.SetShutter(1, 1, 0, 0) # open shutter
         # andor.SetHSSpeed(0, 0)
         # andor.SetVSSpeed(1)
@@ -158,11 +184,10 @@ class RecordPath(ConductorParameter):
         # andor.SetNumberAccumulations(1)
         # andor.SetNumberKinetics(3)
         # andor.SetBaselineClamp(0)
-        # andor.SetPreAmpGain(preamp_gain)
+        # andor.SetPreAmpGain(2)
         
         # andor.SetReadMode(3) # single track mode
-        # andor.SetSingleTrack(371, 160) 
-
+        # andor.SetSingleTrack(376, 160) 
         
         # # Restart the cooler if the temperature of the camera is too high.
         # if float(andor.GetTemperature()) > 0:
@@ -303,33 +328,43 @@ class RecordPath(ConductorParameter):
     def take_fluorescence_image_2D(self):
             # # Sr2 legacy
             andor = self._andor
+            preamp_gain = 2
+            exposure_time = 0.001
 
             andor.AbortAcquisition()
             # Acquisition settings
             andor.SetOutputAmplifier(0)
             andor.SetEMGainMode(2) # Linear gain mode.
             andor.SetEMCCDGain(50)
-            exposure_time = 0.001
             andor.SetExposureTime(exposure_time)
             andor.SetShutter(1, 1, 0, 0) # open shutter
             andor.SetHSSpeed(0, 0)
             andor.SetVSSpeed(1)
             andor.SetTriggerMode(1) #external
             andor.SetAcquisitionMode(3)
+            andor.SetNumberAccumulations(1)
             andor.SetNumberKinetics(3)
             andor.SetBaselineClamp(0)
-            preamp_gain = 2
             andor.SetPreAmpGain(preamp_gain)
             
             andor.SetReadMode(4) # image mode
             # andor.SetImage(1, 1, 1, 512, 241, 340)
-            andor.SetImage(1, 1, 1, 512, 270, 470)
+            # andor.SetImage(1, 1, 1, 512, 270, 470)
+            hbin = 16
+            vbin = 2
+            hstart = 1
+            hend = 512
+            vstart = 341
+            vend = 428
+
+            andor.SetImage(hbin, vbin, hstart, hend, vstart, vend) # full image
+
 
             andor.StartAcquisition()
             timeout_ms = 60000
             andor.WaitForAcquisitionTimeOut(timeout_ms)
 
-            data = andor.GetAcquiredData(3*80*512).reshape(3, 80, 512)
+            data = andor.GetAcquiredData(3*int((hend-hstart+1)/hbin)*int((vend-vstart+1)/vbin)).reshape(3, int((vend-vstart+1)/vbin), int((hend-hstart+1)/hbin))
             images = {key: data[i]
                       for i, key in enumerate(["g", "e", "bg"])}
 
@@ -366,7 +401,7 @@ class RecordPath(ConductorParameter):
                             compression=self.compression, 
                             compression_opts=self.compression_level)
 
-            print("Camera save error: writing dummy file failed.")
+            # print("Camera save error: writing dummy file failed.")
             print(data_path)
             print('Camera temp is (C): ' + str(andor.GetTemperature()))
             print('EMCCD gain: ' + str(andor.GetEMCCDGain()))

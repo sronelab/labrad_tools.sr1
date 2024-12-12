@@ -10,7 +10,7 @@ class HrFrequency_bsb_m(ConductorParameter):
     autostart = True
     priority = 2
     dark_frequency = 105e6
-    output_m=5 #reg 7
+    output_m='low' #reg 7
     
 
     def initialize(self,config):
