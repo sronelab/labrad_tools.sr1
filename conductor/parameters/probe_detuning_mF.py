@@ -9,10 +9,21 @@ from conductor.parameter import ConductorParameter
 class ProbeDetuningMF(ConductorParameter):
 
 #Normally must initialize for first shot
-#    def initialize(self,config):
 
     priority = 4
     autostart = False
+
+    # memory for the frequency values 
+    f_steer = None
+    f_fnc = None
+    f_9_7 = None
+    f_7_5 = None
+    f_5_3 = None
+    f_bsb_m = None
+    f_bsb_p = None
+
+    def initialize(self, config):
+        pass
 
 
     def update(self):
@@ -75,27 +86,54 @@ class ProbeDetuningMF(ConductorParameter):
 #            f_fnc += (100.e6-f_steer)*2.
 #            f_steer =  100.e6-f_steer
 
-            print "f_fnc_mF: %f"%f_fnc
-            print "f_steer_mF: %f"%f_steer
+            #print "f_fnc_mF: %f"%f_fnc
+            #print "f_steer_mF: %f"%f_steer
 
-            request = {
-                    'clock_mF.hr_frequency_mF': float(f_steer), 
-                    'clock_mF.hr_demod_frequency_mF': float(f_fnc),
-                    'clock_mF.hr_frequency_top_dds': float(f_steer), 
-                    'clock_mF.hr_demod_top_dds': float(f_fnc),
-                    'clock_mF.hr_frequency_9_7': float(f_9_7), 
-                    'clock_mF.hr_demod_9_7': float(f_fnc),
-                    'clock_mF.hr_frequency_7_5': float(f_7_5), 
-                    'clock_mF.hr_demod_7_5': float(f_fnc),
-                    'clock_mF.hr_frequency_5_3': float(f_5_3), 
-                    'clock_mF.hr_demod_5_3': float(f_fnc),
-                    'clock_mF.hr_frequency_bsb_m': float(f_bsb_m), 
-                    'clock_mF.hr_frequency_bsb_p': float(f_bsb_p), 
 
-                    }
+            f_steer = float(f_steer)
+            f_fnc = float(f_fnc)
+            f_9_7 = float(f_9_7)
+            f_7_5 = float(f_7_5)
+            f_5_3 = float(f_5_3)
+            f_bsb_m = float(f_bsb_m)
+            f_bsb_p = float(f_bsb_p)
+            request = {}
+
+            if self.f_steer != f_steer:
+                request['clock_mF.hr_frequency_mF'] = f_steer
+                request['clock_mF.hr_frequency_top_dds'] = f_steer
+            
+            if self.f_fnc != f_fnc:
+                request['clock_mF.hr_demod_frequency_mF'] = f_fnc
+                request['clock_mF.hr_demod_top_dds'] = f_fnc
+                request['clock_mF.hr_demod_9_7'] = f_fnc
+                request['clock_mF.hr_demod_7_5'] = f_fnc
+                request['clock_mF.hr_demod_5_3'] = f_fnc
+            
+            if self.f_9_7 != f_9_7:
+                request['clock_mF.hr_frequency_9_7'] = f_9_7
+
+            if self.f_7_5 != f_7_5:
+                request['clock_mF.hr_frequency_7_5'] = f_7_5
+
+            if self.f_5_3 != f_5_3:
+                request['clock_mF.hr_frequency_5_3'] = f_5_3
+
+            if self.f_bsb_m != f_bsb_m:
+                request['clock_mF.hr_frequency_bsb_m'] = f_bsb_m
+
+            if self.f_bsb_p != f_bsb_p:
+                request['clock_mF.hr_frequency_bsb_p'] = f_bsb_p
+
             self.server._set_parameter_values(request)
 
-
-
+            self.f_steer = f_steer
+            self.f_fnc = f_fnc
+            self.f_9_7 = f_9_7
+            self.f_7_5 = f_7_5
+            self.f_5_3 = f_5_3
+            self.f_bsb_m = f_bsb_m
+            self.f_bsb_p = f_bsb_p
+            print("ProbeDetuningMF update list: ", request)
 
 Parameter =  ProbeDetuningMF

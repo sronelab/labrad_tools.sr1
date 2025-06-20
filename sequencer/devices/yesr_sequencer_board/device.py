@@ -80,7 +80,7 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def save_sequence(self, sequence, sequence_name, tmpdir=True):
         sequence_directory = self.sequence_directory.format(time.strftime('%Y%m%d'))
-	# print sequence_directory
+	print sequence_directory
         if tmpdir:
             sequence_directory = os.path.join(sequence_directory, '.tmp')
         if not os.path.exists(sequence_directory):
@@ -182,11 +182,11 @@ class YeSrSequencerBoard(DefaultDevice):
         parameter_values = self.get_sequence_parameter_values(parameter_names)
 
         # Rewrite if the previous and the current parameter_values are different. 
-        if (parameter_values != self.parameter_values_previous) | (raw_sequence != self.raw_sequence_previous):
-            print("Rewriting the sequence...")
+        if True: #(parameter_values != self.parameter_values_previous) | (raw_sequence != self.raw_sequence_previous):
+            #print("Rewriting the sequence...")
             self.is_device_writing = True
             
-            ti = time.time()
+            #ti = time.time()
             programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
             sequence_bytes = self.make_sequence_bytes(programmable_sequence)
             if len(sequence_bytes) > self.max_sequence_bytes:
@@ -196,7 +196,7 @@ class YeSrSequencerBoard(DefaultDevice):
             self.set_loading(True)
             self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
             self.set_loading(False)
-            print(" took {} seconds".format(time.time()-ti))
+            #print(" took {} seconds".format(time.time()-ti))
             
             self.is_device_writing = False
         else:
@@ -204,8 +204,8 @@ class YeSrSequencerBoard(DefaultDevice):
             self.is_device_writing = False
         
         #save parameter_values for the next shot
-        self.parameter_values_previous = parameter_values
-        self.raw_sequence_previous = raw_sequence
+        #self.parameter_values_previous = parameter_values
+        #self.raw_sequence_previous = raw_sequence
     
     def get_raw_sequence(self):
         return self.raw_sequence
