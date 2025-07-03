@@ -1,7 +1,7 @@
 from conductor.parameter import ConductorParameter
 
 class ProbeDetuning(ConductorParameter):
-    priority = 4 #Must be higer than clock_aom.hr_frequency and clock_fiber_aom.hr_demod_frequency
+    priority = 5 #Must be higer than clock_aom.hr_frequency and clock_fiber_aom.hr_demod_frequency
     autostart = False
     call_in_thread = False
 

@@ -27,7 +27,7 @@ class AndorServer(LabradServer):
 
     # for the clock servo. stroing recent 100 data with its filenames.
     records = deque([])
-    max_records = 20
+    max_records = 100
 
     def initServer(self):
         global andor
@@ -505,12 +505,14 @@ class AndorServer(LabradServer):
 
     @setting(73)
     def retrieve_records(self, c):
-        """ Retrieve stored records. """
-        _records = {}
-        for record in self.records: # convert list to dict
-            _key = record.keys()[0]
-            _records[_key] = record[_key]
-        return json.dumps(_records)
+        """Retrieve all stored records as a single dictionary."""
+        result = {}
+        for record in self.records:
+            if not isinstance(record, dict) or len(record) != 1:
+                continue  # skip malformed entries
+            key = next(iter(record))
+            result[key] = record[key]
+        return json.dumps(result)
 
 Server = AndorServer
 

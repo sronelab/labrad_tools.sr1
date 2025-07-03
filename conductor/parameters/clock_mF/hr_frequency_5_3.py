@@ -12,7 +12,7 @@ class HrFrequency_5_3(ConductorParameter):
     dark_frequency = 105e6
     output_p=4 # reg 6
     output_m=5 #reg 7
-    current_value = None
+    current_value = 0
 
     def initialize(self,config):
         self.connect_to_labrad()

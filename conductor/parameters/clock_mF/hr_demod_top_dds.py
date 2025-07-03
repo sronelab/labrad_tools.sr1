@@ -12,7 +12,7 @@ class HrDemodFrequencyDDS(ConductorParameter):
     dark_frequency = 73e6
     dark_offset = 0.0 # keep zero while top clock path uses zeroth order reference.
     ramp_rate = -8.0
-    current_value = None
+    current_value = 0
     def initialize(self,config):
         self.connect_to_labrad()
         #initial_request =  {'top_ad9956_0': {'start': self.dark_frequency, 'stop': self.dark_frequency+self.dark_offset, 'rate': self.ramp_rate} }

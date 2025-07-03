@@ -5,7 +5,7 @@ from conductor.parameter import ConductorParameter
 
 class HrFrequency(ConductorParameter):
     autostart = True
-    priority = 2
+    priority = 3
     dark_frequency = 57.622e6
     dark_offset = 1e6
     ramp_rate = -8

@@ -12,7 +12,7 @@ class HrDemodFrequency_9_7(ConductorParameter):
     dark_frequency = 73e6
     output_p=0 #ftw 2
     output_m=1
-    current_value = None
+    current_value = 0
 
     def initialize(self,config):
         self.connect_to_labrad()
