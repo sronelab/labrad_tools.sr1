@@ -1,0 +1,19 @@
+[Unit]
+Description=Conductor server
+After=network-online.target multi-user.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=srgang
+WorkingDirectory=/home/srgang/labrad_tools.sr1/
+EnvironmentFile=/home/srgang/.config/conductor.env
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/python /home/srgang/labrad_tools.sr1/conductor/server.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
