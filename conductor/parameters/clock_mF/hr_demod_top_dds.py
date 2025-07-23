@@ -30,7 +30,7 @@ class HrDemodFrequencyDDS(ConductorParameter):
             pass
         else:
             if self.value is not None:
-                print('[hr_demod_top_dds.py]: clock_aom.hr_demod_frequency', self.value)
+                # print('[hr_demod_top_dds.py]: clock_aom.hr_demod_frequency', self.value)
     #            min_freq = min([self.value, self.dark_frequency])
     #            max_freq = max([self.value, self.dark_frequency])
 #                yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

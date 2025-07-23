@@ -21,13 +21,13 @@ class HrDemodFrequency_9_7(ConductorParameter):
         initial_request =  {'top_ad9956_1': {'frequency': self.dark_frequency, 'output':self.output_m} }
         self.cxn.rf.dicfrequencies(json.dumps(initial_request))
         print('hr_demod_9_7_frequency init\'d with rr:' , self.dark_frequency)
-    
+
     def update(self):
         if self.value is self.current_value:
             pass
         else:
             if self.value is not None:
-                print('[hr_demod_9_7.py] clock_aom.hr_demod_9_7_frequency', self.value)
+                # print('[hr_demod_9_7.py] clock_aom.hr_demod_9_7_frequency', self.value)
 #            min_freq = min([self.value, self.dark_frequency])
 #            max_freq = max([self.value, self.dark_frequency])
 #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

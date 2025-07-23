@@ -13,7 +13,7 @@ class ProbeDetuningMF(ConductorParameter):
     priority = 4
     autostart = False
 
-    # memory for the frequency values 
+    # memory for the frequency values
     f_steer = None
     f_fnc = None
     f_9_7 = None
@@ -33,19 +33,19 @@ class ProbeDetuningMF(ConductorParameter):
 
         if self.value is not None:
 
-            request = {'si_demod': {}} 
+            request = {'si_demod': {}}
             mjm_comb_demod = self.server._get_parameter_values(request, all=False)['si_demod']
 
             #get frequency detunings from sequencer for state preparation--seems to not be dynamic? but it worked before...
-            request = {'f_9_7': {}} 
+            request = {'f_9_7': {}}
             f_9_7 = self.server._get_parameter_values(request, all=False)['f_9_7']
-            request = {'f_7_5': {}} 
+            request = {'f_7_5': {}}
             f_7_5 = self.server._get_parameter_values(request, all=False)['f_7_5']
-            request = {'f_5_3': {}} 
+            request = {'f_5_3': {}}
             f_5_3 = self.server._get_parameter_values(request, all=False)['f_5_3']
-            request = {'f_bsb_m': {}} 
+            request = {'f_bsb_m': {}}
             f_bsb_m = self.server._get_parameter_values(request, all=False)['f_bsb_m']
-            request = {'f_bsb_p': {}} 
+            request = {'f_bsb_p': {}}
             f_bsb_p = self.server._get_parameter_values(request, all=False)['f_bsb_p']
             mF_value = self.value
 
@@ -69,17 +69,17 @@ class ProbeDetuningMF(ConductorParameter):
 
             f_fnc = 2.0*(-1.0*float(mF_value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
             f_steer = f_fnc/2.0 - f_vco
-	
-            #correcting for mF path. We take +1 order of f steer aftering going through -1 order 
+
+            #correcting for mF path. We take +1 order of f steer aftering going through -1 order
             #of 100 MHz aom
 	    # Alex's modification 2022/02/02
 	    # for top clock path we have a 41MHz AOM
-	    
+
             f_aom_2 = 41.e6 #41 MHz + 1 order
             #f_fnc = 73.504e6 #(f_vco - f_aom_2)*2
     #	    f_fnc = f_fnc - 2*f_steer - f_aom_2*2
     #	    f_steer = f_fnc/2.0 -f_vco + f_aom_2
-            f_fnc += (-f_steer - f_aom_2)*2
+            f_fnc += (-f_steer - f_aom_2)*2.0
             f_steer = f_steer + f_aom_2
             #f_steer_9_7=f_steer+f_9_7
 
@@ -99,31 +99,21 @@ class ProbeDetuningMF(ConductorParameter):
             f_bsb_p = float(f_bsb_p)
             request = {}
 
-            if self.f_steer != f_steer:
-                request['clock_mF.hr_frequency_mF'] = f_steer
-                request['clock_mF.hr_frequency_top_dds'] = f_steer
-            
-            if self.f_fnc != f_fnc:
-                request['clock_mF.hr_demod_frequency_mF'] = f_fnc
-                request['clock_mF.hr_demod_top_dds'] = f_fnc
-                request['clock_mF.hr_demod_9_7'] = f_fnc
-                request['clock_mF.hr_demod_7_5'] = f_fnc
-                request['clock_mF.hr_demod_5_3'] = f_fnc
-            
-            if self.f_9_7 != f_9_7:
-                request['clock_mF.hr_frequency_9_7'] = f_9_7
+            # request['clock_mF.hr_frequency_mF'] = f_steer
+            request['clock_mF.hr_frequency_top_dds'] = f_steer
 
-            if self.f_7_5 != f_7_5:
-                request['clock_mF.hr_frequency_7_5'] = f_7_5
+            # request['clock_mF.hr_demod_frequency_mF'] = f_fnc
+            request['clock_mF.hr_demod_top_dds'] = f_fnc
 
-            if self.f_5_3 != f_5_3:
-                request['clock_mF.hr_frequency_5_3'] = f_5_3
+            request['clock_mF.hr_demod_9_7'] = f_fnc
+            request['clock_mF.hr_demod_7_5'] = f_fnc
+            request['clock_mF.hr_demod_5_3'] = f_fnc
 
-            if self.f_bsb_m != f_bsb_m:
-                request['clock_mF.hr_frequency_bsb_m'] = f_bsb_m
-
-            if self.f_bsb_p != f_bsb_p:
-                request['clock_mF.hr_frequency_bsb_p'] = f_bsb_p
+            request['clock_mF.hr_frequency_9_7'] = f_9_7
+            request['clock_mF.hr_frequency_7_5'] = f_7_5
+            request['clock_mF.hr_frequency_5_3'] = f_5_3
+            # request['clock_mF.hr_frequency_bsb_m'] = f_bsb_m
+            # request['clock_mF.hr_frequency_bsb_p'] = f_bsb_p
 
             self.server._set_parameter_values(request)
 
@@ -134,6 +124,6 @@ class ProbeDetuningMF(ConductorParameter):
             self.f_5_3 = f_5_3
             self.f_bsb_m = f_bsb_m
             self.f_bsb_p = f_bsb_p
-            print("ProbeDetuningMF update list: ", request)
+            # print("ProbeDetuningMF update list: ", request)
 
 Parameter =  ProbeDetuningMF

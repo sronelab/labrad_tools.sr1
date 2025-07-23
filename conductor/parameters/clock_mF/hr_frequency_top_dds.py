@@ -25,11 +25,11 @@ class HrFrequencyDDS(ConductorParameter):
         initial_request_ramp = {'top_ad9956_0': self.ramp_rate }
         self.cxn.rf.ramprates(json.dumps(initial_request_ramp))
         print('hr_demod_frequency init\'d with rr: ',self.ramp_rate)
-    
+
     def update(self):
         if self.value is not None:
 	    if self.value != self.current_value:
-            	print('[hr_frequency_top_dds.py] clock_aom.hr_demod_frequency', self.value)
+            	# print('[hr_frequency_top_dds.py] clock_aom.hr_demod_frequency', self.value)
 #            min_freq = min([self.value, self.dark_frequency])
 #            max_freq = max([self.value, self.dark_frequency])
 #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

@@ -32,7 +32,7 @@ class HrFrequency_9_7(ConductorParameter):
                 f_9_7=float(self.value)
                 freq_p=f_steer+f_9_7
                 freq_m=f_steer-f_9_7
-                print('[hr_frequency_9_7.py] clock_aom.hr_9_7_frequency detuning', freq_m, freq_p)
+                # print('[hr_frequency_9_7.py] clock_aom.hr_9_7_frequency detuning', freq_m, freq_p)
     #            min_freq = min([self.value, self.dark_frequency])
     #            max_freq = max([self.value, self.dark_frequency])
     #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

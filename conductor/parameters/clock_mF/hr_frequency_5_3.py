@@ -21,7 +21,7 @@ class HrFrequency_5_3(ConductorParameter):
         initial_request =  {'top_ad9956_0': {'frequency': self.dark_frequency, 'output':self.output_m} }
         self.cxn.rf.dicfrequencies(json.dumps(initial_request))
         print('hr_5_3_frequency init\'d with freq: ', self.dark_frequency)
-    
+
     def update(self):
         if self.current_value is self.value:
             pass
@@ -32,8 +32,8 @@ class HrFrequency_5_3(ConductorParameter):
                 f_5_3=self.value
                 freq_p=f_steer+f_5_3
                 freq_m=f_steer-f_5_3
-                print('clock_aom.hr_5_3_frequency detuning', freq_m, freq_p)
-                print('f_5_3' , f_5_3)
+                # print('clock_aom.hr_5_3_frequency detuning', freq_m, freq_p)
+                # print('f_5_3' , f_5_3)
     #            min_freq = min([self.value, self.dark_frequency])
     #            max_freq = max([self.value, self.dark_frequency])
     #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)

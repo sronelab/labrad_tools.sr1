@@ -7,11 +7,11 @@ from conductor.parameter import ConductorParameter
 ##TEMPORARILY COPYING FOR TOP CLOCK DDS CONTROL
 
 class HrFrequency_bsb_m(ConductorParameter):
-    autostart = True
+    autostart = False
     priority = 2
     dark_frequency = 105e6
     output_m='low' #reg 7
-    current_value = None 
+    current_value = None
 
     def initialize(self,config):
         self.connect_to_labrad()
@@ -20,7 +20,7 @@ class HrFrequency_bsb_m(ConductorParameter):
         # initial_request =  {'top_ad9956_0': {'frequency': self.dark_frequency, 'output':self.output_m} }
         # self.cxn.rf.dicfrequencies(json.dumps(initial_request))
         print('hr_bsb_p_frequency init\'d with freq: ', self.dark_frequency)
-    
+
     def update(self):
         if self.current_value is self.value:
             pass

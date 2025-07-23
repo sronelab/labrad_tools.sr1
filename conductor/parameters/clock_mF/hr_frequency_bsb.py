@@ -6,7 +6,7 @@ from rf.devices.dg4000.device import DG4000
 
 class HrFrequencyBSB(ConductorParameter,DG4000):
 
-    autostart = True
+    autostart = False
     priority = 2
 
     _vxi11_address = '192.168.1.37'
