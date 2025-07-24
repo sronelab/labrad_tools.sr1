@@ -11,9 +11,10 @@ from ok_server.proxy import OKProxy
 
 class Sequence(ConductorParameter):
     autostart = True
-    priority = 10
+    priority = 2
     value_type = 'list'
-    value = ['blue_mot', 'red_mot', 'clock_zero', 'readout_pmt'] * 1
+    # value = ['blue_mot', 'red_mot', 'clock_zero', 'readout_pmt'] * 1
+    value = ['shutters_closed']
 
     loop = True
     call_in_thread = False
@@ -25,7 +26,7 @@ class Sequence(ConductorParameter):
     sequencer_servername = 'sequencer'
     sequencer_devices = ['abcd', 'e','f']
     sequencer_master_device = 'abcd'
-    
+
     def initialize(self, config):
         super(Sequence, self).initialize(config)
 
@@ -43,7 +44,7 @@ class Sequence(ConductorParameter):
         self.sequencer_server.initialize_devices(json.dumps(request))
         self.previous_sequencer_parameter_values = self._get_sequencer_parameter_values()
         callInThread(self.update)
-    
+
     def update(self):
         """ value is list of strings """
         # first check if we are running
@@ -64,9 +65,9 @@ class Sequence(ConductorParameter):
             request = {device_name: None for device_name in self.sequencer_devices}
             what_is_running = json.loads(self.sequencer_server.sequence(json.dumps(request)))
             what_i_think_is_running = {
-                device_name: self.value 
+                device_name: self.value
                     for device_name in self.sequencer_devices
-                } 
+                }
             current_sequencer_parameter_values = self._get_sequencer_parameter_values()
             #if (what_i_think_is_running != what_is_running) or (
             #        self.previous_sequencer_parameter_values != current_sequencer_parameter_values):
@@ -81,7 +82,7 @@ class Sequence(ConductorParameter):
 
         if (not self.loop) and running:
             raise Exception('something is wrong with sequencer.sequence')
-        
+
         callInThread(self._advance_on_trigger)
         #self._advance_on_trigger()
 
@@ -96,7 +97,7 @@ class Sequence(ConductorParameter):
         # clear trigger
         self.fp.UpdateTriggerOuts()
         is_triggered = self.fp.IsTriggered(0x60)
-	print("Waiting for trigger")    
+	print("Waiting for trigger")
         while True:
             self.fp.UpdateTriggerOuts()
             is_triggered = self.fp.IsTriggered(0x60)

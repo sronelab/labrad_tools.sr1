@@ -8,7 +8,7 @@ from conductor.parameter import ConductorParameter
 
 class HrFrequency_5_3(ConductorParameter):
     autostart = True
-    priority = 2
+    priority = 3
     dark_frequency = 105e6
     output_p=4 # reg 6
     output_m=5 #reg 7

@@ -8,7 +8,7 @@ from conductor.parameter import ConductorParameter
 
 class HrFrequency_bsb_p(ConductorParameter):
     autostart = False
-    priority = 2
+    priority = 3
     dark_frequency = 105e6
     output_p='high' # reg 6
     # output_m=5 #reg 7

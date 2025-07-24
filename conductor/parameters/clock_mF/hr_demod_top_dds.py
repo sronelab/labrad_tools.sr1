@@ -8,7 +8,7 @@ from conductor.parameter import ConductorParameter
 
 class HrDemodFrequencyDDS(ConductorParameter):
     autostart = True
-    priority = 2
+    priority = 3
     dark_frequency = 73e6
     dark_offset = 0.0 # keep zero while top clock path uses zeroth order reference.
     ramp_rate = -8.0

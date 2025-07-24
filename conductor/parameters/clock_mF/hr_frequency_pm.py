@@ -7,7 +7,7 @@ from rf.devices.dg4000.device import DG4000
 class HrFrequencyPM(ConductorParameter,DG4000):
 
     autostart = False
-    priority = 2
+    priority = 3
 
     _vxi11_address = '192.168.1.37'
     _source = 2

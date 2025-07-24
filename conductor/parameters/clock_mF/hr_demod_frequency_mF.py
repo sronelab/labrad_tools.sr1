@@ -7,7 +7,7 @@ from rf.devices.sg380.device import SG380
 class HrDemodFrequencyMF(ConductorParameter,SG380):
 
     autostart = True
-    priority = 2
+    priority = 3
 
     vxi11_address = '192.168.1.36'
 

@@ -14,7 +14,7 @@ class ProbeDetuning(ConductorParameter):
             request = {'si_demod': {}}
             mjm_comb_demod = self.server._get_parameter_values(request, all=False)['si_demod']
             f_vco = 155.504e6/2.0
-    
+
             SL_FNC_table_AOM = 30.0e6
             #SL_FNC_comb = 95.524640e6 + 2*SL_FNC_table_AOM # this is the equation for the old distribution center
             SL_FNC_comb = 95.520e6 + 2.*SL_FNC_table_AOM # this is the equation for the current distribution center (2021-04-15)
@@ -27,6 +27,6 @@ class ProbeDetuning(ConductorParameter):
                     'clock_fiber_aom.hr_demod_frequency': float(f_fnc/2.0),
                     }
             self.server._set_parameter_values(request)
-        
+
 
 Parameter = ProbeDetuning
