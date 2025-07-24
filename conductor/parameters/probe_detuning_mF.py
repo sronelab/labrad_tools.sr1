@@ -29,7 +29,7 @@ class ProbeDetuningMF(ConductorParameter):
     def update(self):
 
 
-        print('probe detuning mF update called')
+        # print('probe detuning mF update called')
 
         if self.value is not None:
 

@@ -2,7 +2,7 @@ from conductor.parameter import ConductorParameter
 
 
 #Top clock PM on the last AOM
-#set the phase deviation 
+#set the phase deviation
 # +/-2.5V = +/- phase
 
 #class for top clock psk
@@ -18,13 +18,13 @@ class TopClockPM(ConductorParameter):
     def update(self):
 
 
-        
+
 
         if self.value is not None:
             phase_dev = self.value
-            print('top clock PM dev: ' + str(phase_dev))
+            # print('top clock PM dev: ' + str(phase_dev))
             request = {
-                    'clock_mF.hr_frequency_pm': float(phase_dev), 
+                    'clock_mF.hr_frequency_pm': float(phase_dev),
                     }
             self.server._set_parameter_values(request)
 

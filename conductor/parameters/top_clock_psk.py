@@ -17,13 +17,13 @@ class TopClockPSK(ConductorParameter):
     def update(self):
 
 
-        
+
 
         if self.value is not None:
             phase = self.value
-            print('top clock PSK (degrees): ' + str(phase))
+            # print('top clock PSK (degrees): ' + str(phase))
             request = {
-                    'clock_mF.hr_frequency_psk': float(phase), 
+                    'clock_mF.hr_frequency_psk': float(phase),
                     }
             self.server._set_parameter_values(request)
 

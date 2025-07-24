@@ -12,7 +12,7 @@ from ok_server.proxy import OKProxy
 
 class YeSrSequencerBoard(DefaultDevice):
     sequencer_type = None
-    
+
     ok_servername = None
     ok_interface = None
     ok_bitfilename = None
@@ -20,11 +20,11 @@ class YeSrSequencerBoard(DefaultDevice):
     conductor_servername = None
 
     channels = None
-        
+
     mode_wire = 0x00
     sequence_pipe = 0x80
     clk = 50e6 # [Hz]
-    
+
     sequence_directory = None #Now specified in experiment specific device files
     subsequence_names = None
     sequence = None
@@ -40,7 +40,7 @@ class YeSrSequencerBoard(DefaultDevice):
     sequence_bytes = None
     max_sequence_bytes = 24000
 
-    parameter_values_previous = None 
+    parameter_values_previous = None
     is_device_writing = False
 
     def initialize(self, config):
@@ -49,20 +49,20 @@ class YeSrSequencerBoard(DefaultDevice):
 
         for channel in self.channels:
             channel.set_board(self)
-        
+
         self.connect_to_labrad()
         self.ok_server = self.cxn[self.ok_servername]
         ok = OKProxy(self.ok_server)
-        
+
         fp = ok.okCFrontPanel()
         fp.OpenBySerial(self.ok_interface)
         fp.ConfigureFPGA(self.ok_bitfilename)
         self.fp = fp
-        
+
         self.update_mode()
         self.update_channel_modes()
         self.update_channel_manual_outputs()
-        
+
 
     def load_sequence(self, sequencename):
         for i in range(365):
@@ -73,14 +73,14 @@ class YeSrSequencerBoard(DefaultDevice):
                 break
         if not os.path.exists(sequencepath):
             raise SequenceNotFoundError(sequence_name)
-        
+
         with open(sequencepath, 'r') as infile:
             sequence = json.load(infile)
         return sequence
 
     def save_sequence(self, sequence, sequence_name, tmpdir=True):
         sequence_directory = self.sequence_directory.format(time.strftime('%Y%m%d'))
-	print sequence_directory
+	# print sequence_directory
         if tmpdir:
             sequence_directory = os.path.join(sequence_directory, '.tmp')
         if not os.path.exists(sequence_directory):
@@ -112,7 +112,7 @@ class YeSrSequencerBoard(DefaultDevice):
         if (channel is None) and not suppress_error:
             raise ChannelNotFound(channel_id)
         return channel
-    
+
     def match_sequence_key(self, channel_sequences, channel_key):
         channel_nameloc = channel_key.split('@') + ['']
         channel_name = channel_nameloc[0]
@@ -135,8 +135,8 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def update_channel_modes(self):
         """ to be implemented by child class """
-   
-    def update_channel_manual_outputs(self): 
+
+    def update_channel_manual_outputs(self):
         """ to be implemented by child class """
 
     def default_sequence_segment(self, channel, dt):
@@ -160,12 +160,12 @@ class YeSrSequencerBoard(DefaultDevice):
                 subsequence.update({channel.key: channel_subsequence})
 
             self.save_sequence(subsequence, subsequence_name, tmpdir)
-    
-    
+
+
     def set_sequence(self, subsequence_names):
         self.fix_sequence_keys(subsequence_names, False)
         self.subsequence_names = subsequence_names
-        
+
         subsequence_list = []
         for subsequence_name in subsequence_names:
             subsequence = self.load_sequence(subsequence_name)
@@ -175,17 +175,17 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def get_sequence(self):
         return self.subsequence_names
-   
+
     def set_raw_sequence(self, raw_sequence):
         self.raw_sequence = raw_sequence
         parameter_names = self.get_sequence_parameter_names(raw_sequence)
         parameter_values = self.get_sequence_parameter_values(parameter_names)
 
-        # Rewrite if the previous and the current parameter_values are different. 
+        # Rewrite if the previous and the current parameter_values are different.
         if True: #(parameter_values != self.parameter_values_previous) | (raw_sequence != self.raw_sequence_previous):
             #print("Rewriting the sequence...")
             self.is_device_writing = True
-            
+
             #ti = time.time()
             programmable_sequence = self.substitute_sequence_parameters(raw_sequence, parameter_values)
             sequence_bytes = self.make_sequence_bytes(programmable_sequence)
@@ -197,29 +197,29 @@ class YeSrSequencerBoard(DefaultDevice):
             self.fp.WriteToPipeIn(self.sequence_pipe, self.sequence_bytes)
             self.set_loading(False)
             #print(" took {} seconds".format(time.time()-ti))
-            
+
             self.is_device_writing = False
         else:
             print("Skip rewriting the sequence. Parameter values are the same.")
             self.is_device_writing = False
-        
+
         #save parameter_values for the next shot
         #self.parameter_values_previous = parameter_values
         #self.raw_sequence_previous = raw_sequence
-    
+
     def get_raw_sequence(self):
         return self.raw_sequence
-    
+
     def get_sequence_parameter_names(self, x):
         if type(x).__name__ in ['str', 'unicode'] and x[0] == '*':
             return [x]
         elif type(x).__name__ == 'list':
             return set(list(chain.from_iterable([
-                self.get_sequence_parameter_names(xx) 
+                self.get_sequence_parameter_names(xx)
                 for xx in x])))
         elif type(x).__name__ == 'dict':
             return set(list(chain.from_iterable([
-                self.get_sequence_parameter_names(v) 
+                self.get_sequence_parameter_names(v)
                 for v in x.values()])))
         else:
             return []
@@ -237,7 +237,7 @@ class YeSrSequencerBoard(DefaultDevice):
         else:
             parameter_values = {}
         sequence_parameter_values = {
-            name.replace('sequencer.', '*'): value 
+            name.replace('sequencer.', '*'): value
                 for name, value in parameter_values.items()
             }
         return sequence_parameter_values
@@ -254,10 +254,10 @@ class YeSrSequencerBoard(DefaultDevice):
             return {k: self.substitute_sequence_parameters(v, parameter_values) for k, v in x.items()}
         else:
             return x
-    
+
     def make_sequence_bytes(self, sequence):
         """ to be implemented by child class """
-    
+
     def update_mode(self):
         mode_word = 0 | 2 * int(self.loading) | self.running
         self.fp.SetWireInValue(self.mode_wire, mode_word)
@@ -267,15 +267,15 @@ class YeSrSequencerBoard(DefaultDevice):
         if loading is not None:
             self.loading = loading
             self.update_mode()
-    
+
     def get_loading(self):
         return self.running
-    
+
     def set_running(self, running):
         if running is not None:
             self.running = running
             self.update_mode()
-    
+
     def get_running(self):
         return self.running
 

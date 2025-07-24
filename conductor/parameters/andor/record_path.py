@@ -55,7 +55,7 @@ class RecordPath(ConductorParameter):
             andor = AndorProxy(self.cxn.yecookiemonster_andor)
             andor.verbose=False
             andor.Initialize()
-                    
+
             self._andor = andor
         except:
             print("WARNING: Cannot connect to AndorProxy. Camera might not work")
@@ -94,16 +94,16 @@ class RecordPath(ConductorParameter):
             rel_point_path = os.path.join(experiment_name, point_filename)
         elif sequence is not None:
             rel_point_path = self.nondata_filename.format(time.strftime('%Y%m%d'))
-            
+
         if sequence.loop:
             if np.intersect1d(previous_sequence.value, self.record_sequences):
                 value = rel_point_path
         elif np.intersect1d(sequence.value, self.record_sequences):
             value = rel_point_path
-        
+
         return value
 
-        
+
     @value.setter
     def value(self, x):
         pass
@@ -121,17 +121,17 @@ class RecordPath(ConductorParameter):
             else:
                 sequence_value = sequence.value
             intersection = np.intersect1d(sequence_value, self.record_types.keys())
-            
+
             if intersection != None:
                 record_type = self.record_types.get(intersection[-1])
 
-            print("Camera record_type: {}".format(record_type))
+            # print("Camera record_type: {}".format(record_type))
 
             if record_type == 'fluorescence':
                 self.num_kinetic_shots = 3
                 frac, tot = self.take_fluorescence_image()
 
-                # send data to the proxy instance.       
+                # send data to the proxy instance.
                 shotnumber = self.server.experiment.get('shot_number')
                 experiment_name = self.server.experiment.get('name')
                 point_filename = "{}_{}".format(experiment_name, shotnumber)
@@ -141,7 +141,7 @@ class RecordPath(ConductorParameter):
                 self.num_kinetic_shots = 3
                 self.take_fluorescence_image_2D()
 
-                # send data to the proxy instance.       
+                # send data to the proxy instance.
                 shotnumber = self.server.experiment.get('shot_number')
                 experiment_name = self.server.experiment.get('name')
                 point_filename = "{}_{}".format(experiment_name, shotnumber)
@@ -156,7 +156,7 @@ class RecordPath(ConductorParameter):
                 print("Warning: record_type invalid.")
 
             self.server._send_update({self.name: self.value})
-    
+
     def take_fluorescence_image(self):
         """
         Take 1D image.
@@ -185,10 +185,10 @@ class RecordPath(ConductorParameter):
         # andor.SetNumberKinetics(3)
         # andor.SetBaselineClamp(0)
         # andor.SetPreAmpGain(2)
-        
+
         # andor.SetReadMode(3) # single track mode
-        # andor.SetSingleTrack(376, 160) 
-        
+        # andor.SetSingleTrack(376, 160)
+
         # # Restart the cooler if the temperature of the camera is too high.
         # if float(andor.GetTemperature()) > 0:
         #     print("Cooler restart.")
@@ -241,10 +241,8 @@ class RecordPath(ConductorParameter):
 
 
         # outputing the status
-        print("Image saved to {}".format(data_path))
-        print('Camera temp is (C): ' + str(T_cam))
-        print('EMCCD gain: ' + str(emccd_gain))
-        print("PreAmp Gain: "+str(preamp_gain))
+        # print("Image saved to {}".format(data_path))
+        print('Tcam: ' + str(T_cam)+ ' EMGain: ' + str(emccd_gain) +  "PreAmpGain: "+str(preamp_gain))
 
         # process data for the clock servo
         ee = np.sum(temp_image_e[50:300])
@@ -254,7 +252,7 @@ class RecordPath(ConductorParameter):
         frac = (ee - bg) / tot
 
         return frac, tot
-    
+
     def take_fluorescence_image_2D_oneshot(self):
             """Take a single full ROI 2D image for vacuum lifetime measurement"""
             # # Sr2 legacy
@@ -276,7 +274,7 @@ class RecordPath(ConductorParameter):
             andor.SetBaselineClamp(0)
             preamp_gain = 2
             andor.SetPreAmpGain(preamp_gain)
-            
+
             andor.SetReadMode(4) # image mode
             # andor.SetImage(1, 1, 1, 512, 241, 440)
             andor.SetImage(16, 16, 1, 512, 1, 512) # full image
@@ -306,8 +304,8 @@ class RecordPath(ConductorParameter):
 
             with h5py.File(data_path, "w") as h5f:
                 for image in images:
-                    h5f.create_dataset(image, data=images[image], 
-                            compression=self.compression, 
+                    h5f.create_dataset(image, data=images[image],
+                            compression=self.compression,
                             compression_opts=self.compression_level)
                 # save camera info
                 for cam_info in cam_infos:
@@ -316,8 +314,8 @@ class RecordPath(ConductorParameter):
             #Save dummy data for live plotting
             with h5py.File(dummy_data_path, "w") as h5f:
                 for image in images:
-                    h5f.create_dataset(image, data=images[image], 
-                            compression=self.compression, 
+                    h5f.create_dataset(image, data=images[image],
+                            compression=self.compression,
                             compression_opts=self.compression_level)
 
             print(data_path)
@@ -346,7 +344,7 @@ class RecordPath(ConductorParameter):
             andor.SetNumberKinetics(3)
             andor.SetBaselineClamp(0)
             andor.SetPreAmpGain(preamp_gain)
-            
+
             andor.SetReadMode(4) # image mode
             # andor.SetImage(1, 1, 1, 512, 241, 340)
             # andor.SetImage(1, 1, 1, 512, 270, 470)
@@ -387,8 +385,8 @@ class RecordPath(ConductorParameter):
 
             with h5py.File(data_path, "w") as h5f:
                 for image in images:
-                    h5f.create_dataset(image, data=images[image], 
-                            compression=self.compression, 
+                    h5f.create_dataset(image, data=images[image],
+                            compression=self.compression,
                             compression_opts=self.compression_level)
                 # save camera info
                 for cam_info in cam_infos:
@@ -397,8 +395,8 @@ class RecordPath(ConductorParameter):
             #Save dummy data for live plotting
             with h5py.File(dummy_data_path, "w") as h5f:
                 for image in images:
-                    h5f.create_dataset(image, data=images[image], 
-                            compression=self.compression, 
+                    h5f.create_dataset(image, data=images[image],
+                            compression=self.compression,
                             compression_opts=self.compression_level)
 
             # print("Camera save error: writing dummy file failed.")
@@ -406,11 +404,11 @@ class RecordPath(ConductorParameter):
             print('Camera temp is (C): ' + str(andor.GetTemperature()))
             print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
             print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))
-            
+
     def take_absorption_image(self):
         # # Sr2 legacy
         andor = self._andor
-        
+
         andor.AbortAcquisition()
         # andor.SetAcquisitionMode(3)
         # andor.SetReadMode(4)
@@ -425,7 +423,7 @@ class RecordPath(ConductorParameter):
         # andor.SetTriggerMode(1)
         # andor.SetExposureTime(500e-6)
         # andor.SetImage(1, 1, 1, 1024, 1, 1024)
-        
+
         # for i in range(2):
         #     andor.StartAcquisition()
         #     andor.WaitForAcquisition()
@@ -433,7 +431,7 @@ class RecordPath(ConductorParameter):
         # data = andor.GetAcquiredData(2 * 1024 * 1024).reshape(2, 1024, 1024)
         # images = {key: np.rot90(data[i], 2)
         #           for i, key in enumerate(["image", "bright"])}
-        
+
         # data_path = os.path.join(self.data_directory, self.value)
         # data_directory = os.path.dirname(data_path)
         # if not os.path.isdir(data_directory):
@@ -441,13 +439,13 @@ class RecordPath(ConductorParameter):
 
         # h5f = h5py.File(data_path, "w")
         # for image in images:
-        #     h5f.create_dataset(image, data=images[image], 
-        #             compression=self.compression, 
+        #     h5f.create_dataset(image, data=images[image],
+        #             compression=self.compression,
         #             compression_opts=self.compression_level)
         # h5f.close()
 
         # print(data_path)
-   
+
     def take_fluorescence_image_double(self):
         """
         Take two 1D flourescence images.
@@ -471,11 +469,11 @@ class RecordPath(ConductorParameter):
         andor.SetBaselineClamp(0)
         preamp_gain = 2
         andor.SetPreAmpGain(preamp_gain)
-        
-        andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(371, 100) 
 
-        
+        andor.SetReadMode(3) # single track mode
+        andor.SetSingleTrack(371, 100)
+
+
         # Restart the cooler if the temperature of the camera is too high.
         if float(andor.GetTemperature()) > 0:
             print("Cooler restart.")
@@ -523,7 +521,7 @@ class RecordPath(ConductorParameter):
             'preamp_gain': str(preamp_gain),
             'exposure_time': str(exposure_time),
             }
-        
+
         # Write data
         data_path = os.path.join(self.data_directory, self.value)
         data_directory = os.path.dirname(data_path)
@@ -536,9 +534,9 @@ class RecordPath(ConductorParameter):
 
         with open(data_path_num, 'w') as file:
             json.dump(data_string_num,file)
-        
 
-        # Data dictionary for the second shot. 
+
+        # Data dictionary for the second shot.
         data_string_final = {
             'time': time_start_write,
             'g': temp_image_g_final.tolist(),
