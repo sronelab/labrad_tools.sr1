@@ -19,9 +19,9 @@ class waveplate_MOT(ConductorParameter):
 
         if self.value is not None:
             MOT_voltage = self.value
-            print('MOT WP Voltage (p-p): ' + str(MOT_voltage))
+            # print('MOT WP Voltage (p-p): ' + str(MOT_voltage))
             request = {
-                    'doppler_wp.MOT': float(MOT_voltage), 
+                    'doppler_wp.MOT': float(MOT_voltage),
                     }
             self.server._set_parameter_values(request)
 

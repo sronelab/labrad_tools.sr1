@@ -11,7 +11,7 @@ from ok_server.proxy import OKProxy
 
 class Sequence(ConductorParameter):
     autostart = True
-    priority = 2
+    priority = 10
     value_type = 'list'
     # value = ['blue_mot', 'red_mot', 'clock_zero', 'readout_pmt'] * 1
     value = ['shutters_closed']

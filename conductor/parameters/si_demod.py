@@ -48,7 +48,7 @@ class SiDemod(ConductorParameter):
         #self.inst.local()
         self.value = 8.0 * _freq# float(8.0 * 21.885e6) # 8 * float(response)
 
-        print('Demod freq: ' + str(self.value))
+        # print('Demod freq: ' + str(self.value))
 
 
 

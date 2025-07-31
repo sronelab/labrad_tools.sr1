@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+</head>
+<body>
+    <div id="figure"></div>
+
+    <script type="text/javascript">
+    var connection = new WebSocket('ws://yecountvoncount.colorado.edu:9000');
+    connection.binaryType = "blob"; // Important: treat incoming data as binary (Blob)
+
+    connection.onopen = function() {
+        console.log('WebSocket connection opened.');
+    };
+
+    connection.onmessage = function(event) {
+        var figure = document.getElementById("figure");
+
+        // Clear existing content
+        while (figure.firstChild) {
+            figure.removeChild(figure.firstChild);
+        }
+
+        // Create image from binary PNG blob
+        var img = document.createElement("img");
+        img.src = URL.createObjectURL(event.data); // Blob to URL
+        img.style.maxHeight = "100vh"; // scale as needed
+        img.style.maxWidth = "100%";
+        img.onload = () => URL.revokeObjectURL(img.src); // Clean up URL object
+
+        figure.appendChild(img);
+    };
+    </script>
+</body>
+</html>

@@ -7,7 +7,6 @@ import pickle
 from collections import deque
 from twisted.internet.reactor import callInThread
 
-
 from conductor.parameter import ConductorParameter
 
 from andor_server.proxy import AndorProxy
@@ -107,7 +106,6 @@ class RecordPath(ConductorParameter):
     @value.setter
     def value(self, x):
         pass
-
 
     def update(self):
         if self.value is not None:
@@ -237,8 +235,7 @@ class RecordPath(ConductorParameter):
 
         dummy_data_path = os.path.join(os.getenv('PROJECT_DATA_PATH'),"data","andor_live.pickle")
         with open(dummy_data_path, 'wb') as file:
-            pickle.dump(data_string, file, pickle.HIGHEST_PROTOCOL)
-
+            pickle.dump(data_string, file)
 
         # outputing the status
         # print("Image saved to {}".format(data_path))

@@ -22,7 +22,8 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import os
-import StringIO
+# import StringIO
+import io
 from time import time
 
 from autobahn.twisted.websocket import WebSocketServerProtocol
@@ -49,7 +50,7 @@ class MyServerProtocol(WebSocketServerProtocol):
     def send_figure(cls, figure):
         print 'num connections', len(cls.connections)
         for c in set(cls.connections):
-            reactor.callFromThread(cls.sendMessage, c, figure, False)
+            reactor.callFromThread(cls.sendMessage, c, figure, True)
     
     @classmethod
     def close_all_connections(cls):
@@ -107,41 +108,48 @@ class PlotterServer(ThreadedServer):
             function = getattr(module, function_name)
             fig = function(settings)
             # retrieve silicon frequency data for the clock lock
-            if function_name == "plot_clock_lock":
-                all_axes = fig.get_axes()
-                silicon_axes = all_axes[1, 0]
-                # x_data = []
-                y_data = []
-                for line in silicon_axes.get_lines():
-                    x, y = line.get_data()
-                    # x_data.append(x)
-                    y_data.append(y)
-                self.frequency_si3 = y_data[0][-1]
-                print("Si frequency: ",  self.frequency_si3)
+            # if function_name == "plot_clock_lock":
+            #     all_axes = fig.get_axes()
+            #     silicon_axes = all_axes[1, 0]
+            #     # x_data = []
+            #     y_data = []
+            #     for line in silicon_axes.get_lines():
+            #         x, y = line.get_data()
+            #         # x_data.append(x)
+            #         y_data.append(y)
+            #     self.frequency_si3 = y_data[0][-1]
+            #     print("Si frequency: ",  self.frequency_si3)
 
-            sio = StringIO.StringIO()
-            fig.savefig(sio, format='svg')
-            sio.seek(0)
-            figure_data = sio.read()
+            # sio = StringIO.StringIO()
+            buf = io.BytesIO()
+            # fig.savefig(sio, format='svg')
+            fig.savefig(buf, format='png')
+
+            # sio.seek(0)
+            # figure_data = sio.read()
+            buf.seek(0)
+            figure_data =buf.read()
             MyServerProtocol.send_figure(figure_data)
+            buf.close()
             print 'done plotting'
         except Exception as e:
-            raise e
             print 'failed plotting'
+            raise e
         finally:
             self.is_plotting = False
             try:
                 plt.close(fig)
                 del fig
-                del sio
+                # del sio
+                # del buf
                 del figure_data
             except:
                 pass
 
-    @setting(1)
-    def retrieve_frquency_si3(self, c):
-        if self.frequency_si3 is not None:
-            return str(self.frequency_si3)
+    # @setting(1)
+    # def retrieve_frquency_si3(self, c):
+    #     if self.frequency_si3 is not None:
+    #         return str(self.frequency_si3)
 
 
 Server = PlotterServer

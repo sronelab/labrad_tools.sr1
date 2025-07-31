@@ -19,9 +19,9 @@ class waveplate_doppler(ConductorParameter):
 
         if self.value is not None:
             ask_voltage = self.value
-            print('Doppler WP Voltage (p-p): ' + str(ask_voltage))
+            # print('Doppler WP Voltage (p-p): ' + str(ask_voltage))
             request = {
-                    'doppler_wp.doppler_ASK': float(ask_voltage), 
+                    'doppler_wp.doppler_ASK': float(ask_voltage),
                     }
             self.server._set_parameter_values(request)
 
