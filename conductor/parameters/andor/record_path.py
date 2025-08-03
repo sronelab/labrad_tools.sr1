@@ -10,6 +10,7 @@ from twisted.internet.reactor import callInThread
 from conductor.parameter import ConductorParameter
 
 from andor_server.proxy import AndorProxy
+from update.proxy import UpdateProxy
 
 
 class RecordPath(ConductorParameter):
@@ -47,6 +48,8 @@ class RecordPath(ConductorParameter):
     compression = 'gzip'
     compression_level = 4
 
+    _update_proxy = None
+
     def initialize(self, config):
         super(RecordPath, self).initialize(config)
         self.connect_to_labrad()
@@ -76,6 +79,14 @@ class RecordPath(ConductorParameter):
         andor.SetPreAmpGain(2)
         andor.SetReadMode(3) # single track mode
         andor.SetSingleTrack(376, 160)
+
+        # Setup update server proxy for real-time notifications
+        try:
+            self._update_proxy = UpdateProxy('andor_data')
+            print("Connected to update server for real-time notifications")
+        except:
+            print("WARNING: Cannot connect to update server. Real-time notifications disabled")
+            self._update_proxy = None
 
     @property
     def value(self):
@@ -154,6 +165,22 @@ class RecordPath(ConductorParameter):
                 print("Warning: record_type invalid.")
 
             self.server._send_update({self.name: self.value})
+            # Send update via conductor signal
+            self.server._send_update({self.name: self.value})
+
+            # Send real-time notification via update server
+            if self._update_proxy is not None:
+                try:
+                    update_data = {
+                        'timestamp': time.time(),
+                        'file_path': self.value,
+                        'record_type': record_type,
+                        'shot_number': self.server.experiment.get('shot_number'),
+                        'experiment_name': self.server.experiment.get('name')
+                    }
+                    self._update_proxy.emit(update_data)
+                except Exception as e:
+                    print("Failed to send update server notification: {}".format(e))
 
     def take_fluorescence_image(self):
         """
@@ -247,6 +274,30 @@ class RecordPath(ConductorParameter):
         bg = np.sum(temp_image_bg[50:300])
         tot = ee + gg - 2*bg
         frac = (ee - bg) / tot
+
+        # Send real-time update via update server (after calculations are complete)
+        if self._update_proxy is not None:
+            try:
+                update_data = {
+                    'timestamp': time.time(),
+                    'data_type': 'fluorescence_1D',
+                    'file_path': self.value,  # Use relative path from parameter value
+                    'camera_temp': str(T_cam),
+                    'emccd_gain': str(emccd_gain),
+                    'preamp_gain': str(preamp_gain),
+                    'exposure_time': str(exposure_time),
+                    'ntot_estimate': float(tot),
+                    'fraction_estimate': float(frac),
+                    # Include raw image data for live monitoring
+                    'temp_image_g': temp_image_g.tolist(),
+                    'temp_image_e': temp_image_e.tolist(),
+                    'temp_image_bg': temp_image_bg.tolist(),
+                    'image_length': len(temp_image_g)
+                }
+                self._update_proxy.emit(update_data)
+            except Exception as e:
+                print("Failed to send real-time update: {}".format(e))
+
 
         return frac, tot
 

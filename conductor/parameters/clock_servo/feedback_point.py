@@ -2,9 +2,9 @@ from conductor.parameter import ConductorParameter
 from control_loops import PID, PIID
 import json
 import os
- 
+
 class FeedbackPoint(ConductorParameter):
-    """ 
+    """
     example_config = {
         'locks': {
             '+9/2': {
@@ -68,13 +68,13 @@ class FeedbackPoint(ConductorParameter):
 
             andor_records = self.cxn.yecookiemonster_andor.retrieve_records()
             andor_records = json.loads(andor_records)
-            
+
             # decipher the given dictionary...
             frac = andor_records[point_filename]["frac"]
             tot = andor_records[point_filename]["tot"]
 
             #if there are atoms, do servo on excitation fraction
-            if tot > 100.0:
+            if tot > 300.0:
                 if (frac > 0.0) & (frac < 1.0):
                     control_loop.tick(side, frac)
 

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andor Simple Monitor</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-item {
+            text-align: center;
+            flex: 1;
+        }
+        .status-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .connected {
+            color: #28a745;
+        }
+        .disconnected {
+            color: #dc3545;
+        }
+        .plot-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .plot-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        .waiting {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.2em;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔬 Andor Simple Monitor</h1>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-value" id="connection-status">Checking...</div>
+            <div class="status-label">Connection</div>
+        </div>
+        <div class="status-item">
+            <div class="status-value" id="update-count">0</div>
+            <div class="status-label">Updates</div>
+        </div>
+        <div class="status-item">
+            <div class="status-value" id="ntot">-</div>
+            <div class="status-label">N<sub>total</sub></div>
+        </div>
+        <div class="status-item">
+            <div class="status-value" id="fraction">-</div>
+            <div class="status-label">ρ<sup>ee</sup></div>
+        </div>
+        <div class="status-item">
+            <div class="status-value" id="temp">-</div>
+            <div class="status-label">Camera Temp</div>
+        </div>
+        <div class="status-item">
+            <div class="status-value" id="last-update">-</div>
+            <div class="status-label">Last Update</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="refreshData()">Refresh Now</button>
+        <button onclick="toggleAutoUpdate()">Auto Update: <span id="auto-status">ON</span></button>
+        <button onclick="clearPlots()">Clear Plots</button>
+        <span style="margin-left: 20px; color: #666;">Auto-refresh every 2 seconds</span>
+    </div>
+
+    <div id="waiting-message" class="waiting">
+        <h3>⏳ Waiting for andor data...</h3>
+        <p>Make sure the update server is running and andor parameter is taking images</p>
+        <p><em>Data will appear automatically when available</em></p>
+    </div>
+
+    <div id="plot-content" style="display: none;">
+        <div class="plot-container">
+            <div class="plot-title">Atom Distribution</div>
+            <div id="atom-plot" style="height: 500px;"></div>
+        </div>
+
+        <div class="plot-container">
+            <div class="plot-title">Excited State Fraction</div>
+            <div id="fraction-plot" style="height: 400px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let autoUpdate = true;
+        let lastDataReceived = null;
+        let updateInterval = null;
+
+        // Start auto-updating
+        function startAutoUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            updateInterval = setInterval(checkForData, 2000); // Every 2 seconds
+            checkStatus();
+        }
+
+        // Check connection status
+        function checkStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusElement = document.getElementById('connection-status');
+                    if (data.connected) {
+                        statusElement.textContent = 'Connected';
+                        statusElement.className = 'status-value connected';
+                    } else {
+                        statusElement.textContent = 'Disconnected';
+                        statusElement.className = 'status-value disconnected';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('connection-status').textContent = 'Error';
+                    document.getElementById('connection-status').className = 'status-value disconnected';
+                });
+        }
+
+        // Check for new data
+        function checkForData() {
+            if (!autoUpdate) return;
+
+            fetch('/api/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.log('No data available yet');
+                        return;
+                    }
+                    lastDataReceived = data;
+                    updateDisplay(data);
+                    updatePlots(data);
+                })
+                .catch(error => {
+                    console.log('Error fetching data:', error);
+                });
+        }
+
+        function updateDisplay(data) {
+            // Hide waiting message and show plots
+            document.getElementById('waiting-message').style.display = 'none';
+            document.getElementById('plot-content').style.display = 'block';
+
+            // Update status displays
+            document.getElementById('update-count').textContent = data.statistics.update_count;
+            document.getElementById('ntot').textContent = data.statistics.ntot;
+            document.getElementById('fraction').textContent = data.statistics.mean_fraction.toFixed(4);
+            document.getElementById('temp').textContent = data.statistics.camera_temp + '°C';
+            document.getElementById('last-update').textContent = data.statistics.timestamp;
+        }
+
+        function updatePlots(data) {
+            // Debug: Check actual data magnitudes
+            const maxBg = Math.max(...data.background);
+            const maxGnd = Math.max(...data.ground);
+            const maxExc = Math.max(...data.excited);
+            console.log(`Data magnitudes - Background: ${maxBg.toFixed(3)}, Ground: ${maxGnd.toFixed(3)}, Excited: ${maxExc.toFixed(3)}`);
+
+            // Plot 1: Atom Distribution - separate areas like desktop version
+            const atomTrace1 = {
+                x: data.x,
+                y: data.background,
+                fill: 'tozeroy',
+                type: 'scatter',
+                mode: 'none',
+                name: 'Background',
+                fillcolor: 'rgba(44, 160, 44, 0.7)'
+            };
+
+            const atomTrace2 = {
+                x: data.x,
+                y: data.ground,
+                fill: 'tozeroy',
+                type: 'scatter',
+                mode: 'none',
+                name: '¹S₀, |g⟩',
+                fillcolor: 'rgba(31, 119, 180, 0.7)'
+            };
+
+            const atomTrace3 = {
+                x: data.x,
+                y: data.excited,
+                fill: 'tozeroy',
+                type: 'scatter',
+                mode: 'none',
+                name: '³P₀, |e⟩',
+                fillcolor: 'rgba(255, 127, 14, 0.7)'
+            };
+
+            const atomTrace4 = {
+                x: data.x,
+                y: data.total,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'N_total',
+                line: {color: 'black', width: 2}
+            };
+
+            const atomTrace5 = {
+                x: data.x,
+                y: data.fit,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Gaussian Fit',
+                line: {color: 'black', width: 1, dash: 'dash'}
+            };
+
+            const atomLayout = {
+                title: 'N_total: ' + data.statistics.ntot + ' | Center: ' + data.fit_params.center.toFixed(2) + ' mm | σ: ' + data.fit_params.sigma.toFixed(2) + ' mm',
+                xaxis: {title: 'z [mm]'},
+                yaxis: {title: 'Atoms/lattice site'},
+                showlegend: true,
+                shapes: [
+                    {
+                        type: 'line',
+                        x0: data.fit_params.center_minus,
+                        x1: data.fit_params.center_minus,
+                        y0: 0,
+                        y1: 1,
+                        yref: 'paper',
+                        line: {color: 'black', width: 1, dash: 'dash'}
+                    },
+                    {
+                        type: 'line',
+                        x0: data.fit_params.center_plus,
+                        x1: data.fit_params.center_plus,
+                        y0: 0,
+                        y1: 1,
+                        yref: 'paper',
+                        line: {color: 'black', width: 1, dash: 'dash'}
+                    }
+                ]
+            };
+
+            Plotly.newPlot('atom-plot', [atomTrace1, atomTrace2, atomTrace3, atomTrace4, atomTrace5], atomLayout);
+
+            // Plot 2: Excited State Fraction
+            const fractionTrace1 = {
+                x: data.x,
+                y: data.fraction,
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Data',
+                marker: {size: 3}
+            };
+
+            const fractionTrace2 = {
+                x: data.x_fraction,
+                y: data.fraction_smoothed,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Box Average',
+                line: {color: 'rgba(31, 119, 180, 0.8)', width: 2}
+            };
+
+            const fractionLayout = {
+                title: '⟨ρᵉᵉ(z)⟩: ' + data.statistics.mean_fraction.toFixed(4),
+                xaxis: {title: 'z [mm]'},
+                yaxis: {title: 'ρᵉᵉ', range: [-0.1, 1.1]},
+                showlegend: true,
+                shapes: [
+                    {
+                        type: 'line',
+                        x0: data.fit_params.center_minus,
+                        x1: data.fit_params.center_minus,
+                        y0: -0.1,
+                        y1: 1.1,
+                        line: {color: 'black', width: 1, dash: 'dash'}
+                    },
+                    {
+                        type: 'line',
+                        x0: data.fit_params.center_plus,
+                        x1: data.fit_params.center_plus,
+                        y0: -0.1,
+                        y1: 1.1,
+                        line: {color: 'black', width: 1, dash: 'dash'}
+                    }
+                ]
+            };
+
+            Plotly.newPlot('fraction-plot', [fractionTrace1, fractionTrace2], fractionLayout);
+        }
+
+        // Control functions
+        function refreshData() {
+            checkStatus();
+            checkForData();
+        }
+
+        function toggleAutoUpdate() {
+            autoUpdate = !autoUpdate;
+            document.getElementById('auto-status').textContent = autoUpdate ? 'ON' : 'OFF';
+            if (autoUpdate) {
+                startAutoUpdate();
+            }
+        }
+
+        function clearPlots() {
+            document.getElementById('waiting-message').style.display = 'block';
+            document.getElementById('plot-content').style.display = 'none';
+        }
+
+        // Start everything when page loads
+        window.onload = function() {
+            startAutoUpdate();
+        };
+    </script>
+</body>
+</html>

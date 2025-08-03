@@ -11,6 +11,7 @@ class Plot(ConductorParameter):
     autostart = False
     data_directory = "/media/j/data/"
     priority = 1
+    call_in_thread = True
 
     
     def initialize(self,config):
