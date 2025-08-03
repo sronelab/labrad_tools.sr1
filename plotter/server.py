@@ -7,7 +7,7 @@ description =
 instancename = plotter
 
 [startup]
-cmdline = %PYTHON% %FILE%
+cmdline = nice -n 19 cpulimit -l 70 %PYTHON% %FILE%
 timeout = 20
 
 [shutdown]
@@ -198,7 +198,7 @@ class PlotterServer(ThreadedServer):
             #     print("Si frequency: ",  self.frequency_si3)
 
             buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+            fig.savefig(buf, format='png', dpi=72, bbox_inches='tight')
             buf.seek(0)
             figure_data = buf.read()
             MyServerProtocol.send_figure(figure_data)
