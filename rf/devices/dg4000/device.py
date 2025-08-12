@@ -162,7 +162,7 @@ class DG4000(object):
     def ask_amplitude(self):
         command = 'SOUR{}:MOD:ASK:AMPL?'.format(self._source)
         ans = self._inst.ask(command)
-        return float(ans)
+        return float(ans).amplit
     
     @ask_amplitude.setter
     def ask_amplitude(self, ask_amp):
@@ -206,18 +206,36 @@ class DG4000(object):
         command = 'SOUR{}:FREQ:STOP {}'.format(self._source, frequency)
         self._inst.write(command)
     
+
     @property
     def amplitude(self):
+        # Ensure unit is set to VPP before querying
+        self._inst.write('SOUR{}:VOLT:UNIT VPP'.format(self._source))
         command = 'SOUR{}:VOLT?'.format(self._source)
         ans = self._inst.ask(command)
         return float(ans)
-    
+
     @amplitude.setter
     def amplitude(self, amplitude):
         if amplitude < min(self._amplitude_range) or amplitude > max(self._amplitude_range):
             raise AmplitudeOutOfBoundsError(amplitude)
+        # Ensure unit is set to VPP before setting
+        self._inst.write('SOUR{}:VOLT:UNIT VPP'.format(self._source))
         command = 'SOUR{}:VOLT {}'.format(self._source, amplitude)
         self._inst.write(command)
+
+    # @property
+    # def amplitude(self):
+    #     command = 'SOUR{}:VOLT?'.format(self._source)
+    #     ans = self._inst.ask(command)
+    #     return float(ans)
+    
+    # @amplitude.setter
+    # def amplitude(self, amplitude):
+    #     if amplitude < min(self._amplitude_range) or amplitude > max(self._amplitude_range):
+    #         raise AmplitudeOutOfBoundsError(amplitude)
+    #     command = 'SOUR{}:VOLT {}'.format(self._source, amplitude)
+    #     self._inst.write(command)
         
     @property
     def offset(self):

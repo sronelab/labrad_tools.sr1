@@ -7,7 +7,7 @@ description =
 instancename = plotter
 
 [startup]
-cmdline = nice -n 19 cpulimit -l 70 %PYTHON% %FILE%
+cmdline = %PYTHON% %FILE%
 timeout = 20
 
 [shutdown]
