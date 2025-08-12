@@ -7,7 +7,7 @@ description =
 instancename = plotter
 
 [startup]
-cmdline = nice -n 19 cpulimit -l 70 %PYTHON% %FILE%
+cmdline = %PYTHON% %FILE%
 timeout = 20
 
 [shutdown]
@@ -167,7 +167,7 @@ class PlotterServer(ThreadedServer):
             reactor.callInThread(self._plot, settings)
             #self._plot(settings)
         else:
-            print 'still making previous plot'
+            print('still making previous plot')
 
     def _plot(self, settings):
         fig = None
@@ -184,21 +184,8 @@ class PlotterServer(ThreadedServer):
             module = self._get_cached_module(path, function_name)
             function = getattr(module, function_name)
             fig = function(settings)
-            # retrieve silicon frequency data for the clock lock
-            # if function_name == "plot_clock_lock":
-            #     all_axes = fig.get_axes()
-            #     silicon_axes = all_axes[1, 0]
-            #     # x_data = []
-            #     y_data = []
-            #     for line in silicon_axes.get_lines():
-            #         x, y = line.get_data()
-            #         # x_data.append(x)
-            #         y_data.append(y)
-            #     self.frequency_si3 = y_data[0][-1]
-            #     print("Si frequency: ",  self.frequency_si3)
-
             buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=72, bbox_inches='tight')
+            fig.savefig(buf, format='png', dpi=200)
             buf.seek(0)
             figure_data = buf.read()
             MyServerProtocol.send_figure(figure_data)
