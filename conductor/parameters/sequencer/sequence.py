@@ -97,7 +97,7 @@ class Sequence(ConductorParameter):
         # clear trigger
         self.fp.UpdateTriggerOuts()
         is_triggered = self.fp.IsTriggered(0x60)
-	print("Waiting for trigger")
+        print("Waiting for trigger")
         while True:
             self.fp.UpdateTriggerOuts()
             is_triggered = self.fp.IsTriggered(0x60)
@@ -112,7 +112,7 @@ class Sequence(ConductorParameter):
         #self.server._advance()
         conductor_server = getattr(self.cxn, 'conductor')
         conductor_server.advance(True)
-	print('Advanced')
+        print('Advanced')
     def _mark_timestamp(self):
         request = {'timestamp': time.time()}
         conductor_server = self.cxn.conductor

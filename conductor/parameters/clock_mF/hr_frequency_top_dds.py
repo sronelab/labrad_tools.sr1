@@ -28,22 +28,22 @@ class HrFrequencyDDS(ConductorParameter):
 
     def update(self):
         if self.value is not None:
-	    if self.value != self.current_value:
+	    # if self.value != self.current_value:
             	# print('[hr_frequency_top_dds.py] clock_aom.hr_demod_frequency', self.value)
 #            min_freq = min([self.value, self.dark_frequency])
 #            max_freq = max([self.value, self.dark_frequency])
 #            yield self.cxn.rf.linear_ramp(min_freq, max_freq, self.ramp_rate)
-            	min_freq = min([self.value, self.value + self.dark_offset])
-            	max_freq = max([self.value, self.value + self.dark_offset])
-            #request =  {'top_ad9956_0': {'start': min_freq, 'stop': max_freq, 'rate': self.ramp_rate} }
-            #self.cxn.rf.linear_ramps(json.dumps(request))
-            	request_low =  {'top_ad9956_0': {'frequency':min_freq, 'output':'low'} }
-            	self.cxn.rf.dicfrequencies(json.dumps(request_low))
-            	request_high =  {'top_ad9956_0': {'frequency': max_freq, 'output':'high'} }
-            	self.cxn.rf.dicfrequencies(json.dumps(request_high))
-            	#not sutre if it is best to rewrite every time?
-            	initial_request_ramp = {'top_ad9956_0': self.ramp_rate}
-            	self.cxn.rf.ramprates(json.dumps(initial_request_ramp))
-		self.current_value = self.value
+           	min_freq = min([self.value, self.value + self.dark_offset])
+           	max_freq = max([self.value, self.value + self.dark_offset])
+        #request =  {'top_ad9956_0': {'start': min_freq, 'stop': max_freq, 'rate': self.ramp_rate} }
+        #self.cxn.rf.linear_ramps(json.dumps(request))
+           	request_low =  {'top_ad9956_0': {'frequency':min_freq, 'output':'low'} }
+           	self.cxn.rf.dicfrequencies(json.dumps(request_low))
+           	request_high =  {'top_ad9956_0': {'frequency': max_freq, 'output':'high'} }
+           	self.cxn.rf.dicfrequencies(json.dumps(request_high))
+           	#not sutre if it is best to rewrite every time?
+           	initial_request_ramp = {'top_ad9956_0': self.ramp_rate}
+           	self.cxn.rf.ramprates(json.dumps(initial_request_ramp))
+		# self.current_value = self.value
 
 Parameter = HrFrequencyDDS

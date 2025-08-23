@@ -29,7 +29,7 @@ class AD9956(DefaultDevice):
     serial_address = None
     serial_timeout = 0.05
     serial_baudrate = 9600
-    
+
     board_num = None
     channel_num = None
 
@@ -56,10 +56,10 @@ class AD9956(DefaultDevice):
     frequency_range = [0, sysclk / 2]
 
     update_parameters = ['frequency']
-    
+
     def initialize(self, config):
         super(AD9956, self).initialize(config)
-        
+
         self.connect_to_labrad()
         self.serial_server = self.cxn[self.serial_servername]
 
@@ -69,13 +69,13 @@ class AD9956(DefaultDevice):
         ser.baudrate = self.serial_baudrate
         self.ser = ser
 
-        time.sleep(0.5) 
+        time.sleep(0.5)
         reactor.callInThread(self.delayed_call, 5, self.set_frequency, self.default_frequency)
 
         # Setting a sinlge frequency manually for debugging
         # reactor.callInThread(self.delayed_call, 5, self.set_frequency, 150e6, 0, "high")
         # reactor.callInThread(self.delayed_call, 5, self.set_frequency, 30e6, 1, "high")
-    
+
     def delayed_call(self, delay, func, *args):
         time.sleep(delay)
         func(*args)
@@ -87,7 +87,7 @@ class AD9956(DefaultDevice):
         also ensures that we continue using 3-wire serial communication
 
         Args:
-            mode (str): 'sweep' for frequency ramp, 'single' for single 
+            mode (str): 'sweep' for frequency ramp, 'single' for single
                 frequency output.
         Returns:
             list of four bytes
@@ -115,19 +115,19 @@ class AD9956(DefaultDevice):
         Args:
             frequency (float): frequency in units of Hz
         Returns:
-            list of 8 bytes, specifying frequency in units of SYSCLK. By default 
+            list of 8 bytes, specifying frequency in units of SYSCLK. By default
             the phase is set to zero by setting the first two bytes to zero.
         """
         ftw = hex(int(frequency * 2.**48 / self.sysclk))[2:].zfill(16)
         return [int('0x' + ftw[i:i+2], 0) for i in range(0, 16, 2)]
 
-    
+
     def make_rsrrw(self, rate=1):
         """ make rising sweep ramp rate word
 
         Args:
-            rate: (int) if <  0, increase time between sweep steps to 
-                (rate / SYNC_CLK). minimum rate is 2**16 / SYNCCLK = 1525.879 Hz 
+            rate: (int) if <  0, increase time between sweep steps to
+                (rate / SYNC_CLK). minimum rate is 2**16 / SYNCCLK = 1525.879 Hz
                 for 400 MHz SYSCLK.
         Returns:
             list of 2 bytes, specifying sweep step rate in units of SYNCCLK.
@@ -140,8 +140,8 @@ class AD9956(DefaultDevice):
         """ make falling sweep ramp rate word
 
         Args:
-            rate: (int) if <  0, increase time between sweep steps to 
-                (rate / SYNC_CLK). minimum rate is 2**16 / SYNCCLK = 1525.879 Hz 
+            rate: (int) if <  0, increase time between sweep steps to
+                (rate / SYNC_CLK). minimum rate is 2**16 / SYNCCLK = 1525.879 Hz
                 for 400 MHz SYSCLK.
         Returns:
             list of 2 bytes, specifying sweep step rate in units of SYNCCLK.
@@ -149,37 +149,37 @@ class AD9956(DefaultDevice):
         t_step = max(-rate, 1)
         fsrww = hex(int(t_step))[2:].zfill(4)
         return [int('0x' + fsrww[i:i+2], 0) for i in range(0, 4, 2)]
-    
-    def make_rdftw(self, rate):
-        """ make rising delta frequency tuning word 
 
-        Args: 
-            rate: frequency step of ramp in Hz. rdftw given by 
-                int(freq*SYSCLK/2*24). the minimum step size is 930 mHz for a 
-                400 MHz clock. given frequency will be scaled to the nearest 
+    def make_rdftw(self, rate):
+        """ make rising delta frequency tuning word
+
+        Args:
+            rate: frequency step of ramp in Hz. rdftw given by
+                int(freq*SYSCLK/2*24). the minimum step size is 930 mHz for a
+                400 MHz clock. given frequency will be scaled to the nearest
                 integer multiple of the minimum step size
         Returns:
             list of 4 bytes, MSB first, of ramp down word
         """
-        step_size = max(rate, 1) 
+        step_size = max(rate, 1)
         rdftw = hex(int(step_size))[2:].zfill(6)
         return [int('0x' + rdftw[i:i+2], 0) for i in range(0, 6, 2)]
 
     def make_fdftw(self, rate):
-        """ make falling delta frequency tuning word 
+        """ make falling delta frequency tuning word
 
-        Args: 
-            freq (float): frequency step of ramp in Hz. fdftw given by 
-                int(freq*SYSCLK/2*24) the minimum step size is 93 mHz for a 400 
-                MHz clock. given frequency will be scaled to the nearest integer 
+        Args:
+            freq (float): frequency step of ramp in Hz. fdftw given by
+                int(freq*SYSCLK/2*24) the minimum step size is 93 mHz for a 400
+                MHz clock. given frequency will be scaled to the nearest integer
                 multiple of the minimum step size
         Returns:
             list of 4 bytes, MSB first, of ramp down word
         """
-        step_size = max(rate, 1) 
+        step_size = max(rate, 1)
         fdftw = hex(int(step_size))[2:].zfill(6)
         return [int('0x' + fdftw[i:i+2], 0) for i in range(0, 6, 2)]
-    
+
     def set_linear_ramp(self, start=None, stop=None, rate=1):
         """ program triggerable ramp.
         Args:
@@ -207,8 +207,8 @@ class AD9956(DefaultDevice):
                 + get_instruction_set(self.board_num, self.fdftw_reg, fdw)
                 + get_instruction_set(self.board_num, self.rsrr_reg, rsrr)
                 + get_instruction_set(self.board_num, self.fsrr_reg, fsrr)
-                + get_instruction_set(self.board_num, self.flow_reg, ftw_start) 
-                + get_instruction_set(self.board_num, self.fhigh_reg, ftw_stop) 
+                + get_instruction_set(self.board_num, self.flow_reg, ftw_start)
+                + get_instruction_set(self.board_num, self.fhigh_reg, ftw_stop)
                 )
             command = ''.join(instruction_set)
             self.ser.write(command)
@@ -232,7 +232,7 @@ class AD9956(DefaultDevice):
         # overwrite board if no input
         if board == -1:
             board = self.board_num
-        
+
         #overwrite output if no input
         if output == None:
             output='low'
@@ -244,10 +244,10 @@ class AD9956(DefaultDevice):
                     ''.format(frequency, min_freq, max_freq))
             raise Exception(message)
         #Set to single frequency output mode
-        cfr1w = self.make_cfr1w('single') 
-        #Write frequency word to pcr0 (ramp enable TTL input on DDS box must 
+        cfr1w = self.make_cfr1w('single')
+        #Write frequency word to pcr0 (ramp enable TTL input on DDS box must
         # be set to FALSE by LABVIEW)
-        ftw = self.make_ftw(frequency) 
+        ftw = self.make_ftw(frequency)
         if output == 'high':
             instruction_set = (
                 get_instruction_set(board, self.cfr1_reg, cfr1w)
@@ -262,11 +262,11 @@ class AD9956(DefaultDevice):
             instruction_set = (
                 get_instruction_set(board, self.cfr1_reg, cfr1w)
                 + get_instruction_set(board, self.extra_regs[output], ftw)
-                )       
+                )
         command = ''.join(instruction_set)
         self.ser.write(command)
 #        self.serial_server.write(self.serial_address, command)
-        
+
         if output == 'low':
             self.frequency_low = frequency
         elif output == 'high':
@@ -281,8 +281,8 @@ class AD9956(DefaultDevice):
     def set_ramprate(self, rate):
         """
         set ramp conditions in operation where cfrw1 is rewritten via a trigger to initiate ramp mode
-        
-        Args: rate -- integer rate which determines frequency step size and time delay between steps (see command generation functions 
+
+        Args: rate -- integer rate which determines frequency step size and time delay between steps (see command generation functions
         called below. )
         """
         self.ramprate=rate
@@ -308,7 +308,7 @@ class AD9956(DefaultDevice):
     def get_frequency(self, output='low'):
         """ get programmed freqeuncy
 
-        Args: 
+        Args:
             None
         Returns:
             frequency: (float) frequency in units of Hz
@@ -320,7 +320,7 @@ class AD9956(DefaultDevice):
             frequency = self.frequency_high
         elif (0 <= output and 6 > output ):
             frequency =self.extra_freqs[output]
-        else: 
+        else:
             message = 'output selection: {} is not either "high" or "low" or less than 6'
             raise Exception(message)
         return frequency
@@ -328,7 +328,7 @@ class AD9956(DefaultDevice):
     def get_ramprate(self):
         """ get programmed freqeuncy
 
-        Args: 
+        Args:
             None
         Returns:
             frequency: ramp rate

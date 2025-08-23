@@ -12,7 +12,7 @@ class TopClockPSK(ConductorParameter):
 
     priority = 4
     autostart = False
-
+    call_in_thread = False
 
     def update(self):
 
