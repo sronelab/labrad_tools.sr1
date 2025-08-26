@@ -28,7 +28,7 @@ import weakref
 # import StringIO
 import io
 from time import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 
 from autobahn.twisted.websocket import WebSocketServerProtocol
 from autobahn.twisted.websocket import WebSocketServerFactory
@@ -109,12 +109,18 @@ class PlotterServer(ThreadedServer):
     # Module cache to prevent memory leaks from repeated imports
     _module_cache = OrderedDict()
 
+    # Request queue to handle plot requests during busy periods
+    _plot_queue = None
+
     def initServer(self):
         """ socket server """
         url = u"ws://0.0.0.0:{}".format(WEBSOCKET_PORT)
         factory = WebSocketServerFactory()
         factory.protocol = MyServerProtocol
         reactor.listenTCP(WEBSOCKET_PORT, factory)
+
+        # Initialize plot request queue (maxlen=1 keeps only latest request)
+        self._plot_queue = deque(maxlen=1)
 
     def stopServer(self):
         """ socket server """
@@ -163,11 +169,27 @@ class PlotterServer(ThreadedServer):
     @setting(0)
     def plot(self, c, settings_json='{}'):
         settings = json.loads(settings_json)
+
+        # Add request to queue (replaces any existing queued request)
+        self._plot_queue.append(settings)
+
+        # Start processing queue if not currently plotting
         if not self.is_plotting:
-            reactor.callInThread(self._plot, settings)
-            #self._plot(settings)
-        else:
-            print('still making previous plot')
+            reactor.callInThread(self._plot_with_queue)
+
+    def _plot_with_queue(self):
+        """Process queued plot requests until queue is empty."""
+        while self._plot_queue and not self.is_plotting:
+            try:
+                settings = self._plot_queue.popleft()
+                self._plot(settings)
+            except IndexError:
+                # Queue became empty between check and popleft
+                break
+            except Exception as e:
+                print('Error processing queued plot: {0}'.format(e))
+                # Continue processing remaining items in queue
+                continue
 
     def _plot(self, settings):
         fig = None
