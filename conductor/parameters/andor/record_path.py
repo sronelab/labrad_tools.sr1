@@ -76,54 +76,23 @@ class RecordPath(ConductorParameter):
 
 
         # default setting for 1D image
-        # andor.SetOutputAmplifier(0)
-        # andor.SetEMGainMode(2) # Linear gain mode.
-        # andor.SetEMCCDGain(50) #normally gain = 50
-        # andor.SetExposureTime(0.001)
-        # andor.SetShutter(1, 1, 0, 0) # open shutter
-        # andor.SetHSSpeed(0, 0)
-        # andor.SetVSSpeed(1)
-        # andor.SetTriggerMode(1) #external
-        # andor.SetAcquisitionMode(3)
-        # andor.SetNumberAccumulations(1)
-        # andor.SetNumberKinetics(3)
-        # andor.SetBaselineClamp(0)
-        # andor.SetPreAmpGain(2)
-        # andor.SetReadMode(3) # single track mode
-        # andor.SetSingleTrack(376, 160)
+        andor.SetOutputAmplifier(0)
+        andor.SetEMGainMode(2) # Linear gain mode.
+        andor.SetEMCCDGain(50) #normally gain = 50
+        andor.SetExposureTime(0.001)
+        andor.SetShutter(1, 1, 0, 0) # open shutter
+        andor.SetHSSpeed(0, 0)
+        andor.SetVSSpeed(1)
+        andor.SetTriggerMode(1) #external
+        andor.SetAcquisitionMode(3)
+        andor.SetNumberAccumulations(1)
+        andor.SetNumberKinetics(3)
+        andor.SetBaselineClamp(0)
+        andor.SetPreAmpGain(2)
+        andor.SetReadMode(3) # single track mode
+        andor.SetSingleTrack(376, 160)
 
-        # # 2D image setting
-        # hbin = 1
-        # vbin = 1
-        # hstart = 1
-        # hend = 512
-        # vstart = 341 #341
-        # vend = 428
-        
-        # andor.AbortAcquisition()
-
-        # # Acquisition settings
-        # andor.SetOutputAmplifier(0)
-        # andor.SetEMGainMode(2) # Linear gain mode.
-        # andor.SetEMCCDGain(50)
-        # andor.SetExposureTime(0.001)
-        # # andor.SetShutter(1, 1, 0, 0) # open shutter
-        # andor.SetHSSpeed(0, 0)
-        # andor.SetVSSpeed(0)
-        # andor.SetTriggerMode(0) #external
-        # andor.SetAcquisitionMode(3)
-        # andor.SetNumberAccumulations(1)
-        # andor.SetNumberKinetics(3)
-        # andor.SetBaselineClamp(0)
-        # andor.SetPreAmpGain(2)
-
-        # andor.SetReadMode(4) # image mode
-        # # andor.SetImage(1, 1, 1, 512, 241, 340)
-        # #andor.SetImage(1, 1, 1, 512, 270, 470)
-
-
-        # andor.SetImage(hbin, vbin, hstart, hend, vstart, vend) # full image
-
+      
 
 
         # Setup update server proxy for real-time notifications
@@ -427,8 +396,8 @@ class RecordPath(ConductorParameter):
             vbin = 2
             hstart = 1
             hend = 512
-            vstart = 341 #341
-            vend = 428
+            vstart = 301#341
+            vend = 468
             
             andor.AbortAcquisition()
 
