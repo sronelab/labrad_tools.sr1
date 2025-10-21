@@ -21,6 +21,8 @@ class RecordPath(ConductorParameter):
     record_types = {
         "readout_pmt":"fluorescence",
         "readout_nz0":"fluorescence",
+        "readout_nz0_coherent_minus":"fluorescence",
+        "readout_nz0_coherent_plus":"fluorescence",
         "readout_erasure":"fluorescence",
         "readout_pmtTRIG":"fluorescence",
         "readout_pmt_2Dimg":"fluorescence2D",
@@ -32,6 +34,8 @@ class RecordPath(ConductorParameter):
         'readout_pmt',
         'readout_erasure',
         "readout_nz0",
+        "readout_nz0_coherent_minus",
+        "readout_nz0_coherent_plus",
         "readout_pmt_2Dimg",
         "readout_pmtTRIG",
 	    "readout_pmt_MOT",
@@ -62,23 +66,65 @@ class RecordPath(ConductorParameter):
         except:
             print("WARNING: Cannot connect to AndorProxy. Camera might not work")
             self._andor = None
+        # Restart the cooler if the temperature of the camera is too high.
+        if float(andor.GetTemperature()) > 0:
+            print("Cooler restart.")
+            andor.SetFanMode(2) # 2 for off
+            andor.SetTemperature(-70)
+            andor.SetCoolerMode(1) #1 Temperature is maintained on ShutDown
+            andor.CoolerON()
+
 
         # default setting for 1D image
-        andor.SetOutputAmplifier(0)
-        andor.SetEMGainMode(2) # Linear gain mode.
-        andor.SetEMCCDGain(50) #normally gain = 50
-        andor.SetExposureTime(0.001)
-        andor.SetShutter(1, 1, 0, 0) # open shutter
-        andor.SetHSSpeed(0, 0)
-        andor.SetVSSpeed(1)
-        andor.SetTriggerMode(1) #external
-        andor.SetAcquisitionMode(3)
-        andor.SetNumberAccumulations(1)
-        andor.SetNumberKinetics(3)
-        andor.SetBaselineClamp(0)
-        andor.SetPreAmpGain(2)
-        andor.SetReadMode(3) # single track mode
-        andor.SetSingleTrack(376, 160)
+        # andor.SetOutputAmplifier(0)
+        # andor.SetEMGainMode(2) # Linear gain mode.
+        # andor.SetEMCCDGain(50) #normally gain = 50
+        # andor.SetExposureTime(0.001)
+        # andor.SetShutter(1, 1, 0, 0) # open shutter
+        # andor.SetHSSpeed(0, 0)
+        # andor.SetVSSpeed(1)
+        # andor.SetTriggerMode(1) #external
+        # andor.SetAcquisitionMode(3)
+        # andor.SetNumberAccumulations(1)
+        # andor.SetNumberKinetics(3)
+        # andor.SetBaselineClamp(0)
+        # andor.SetPreAmpGain(2)
+        # andor.SetReadMode(3) # single track mode
+        # andor.SetSingleTrack(376, 160)
+
+        # # 2D image setting
+        # hbin = 1
+        # vbin = 1
+        # hstart = 1
+        # hend = 512
+        # vstart = 341 #341
+        # vend = 428
+        
+        # andor.AbortAcquisition()
+
+        # # Acquisition settings
+        # andor.SetOutputAmplifier(0)
+        # andor.SetEMGainMode(2) # Linear gain mode.
+        # andor.SetEMCCDGain(50)
+        # andor.SetExposureTime(0.001)
+        # # andor.SetShutter(1, 1, 0, 0) # open shutter
+        # andor.SetHSSpeed(0, 0)
+        # andor.SetVSSpeed(0)
+        # andor.SetTriggerMode(0) #external
+        # andor.SetAcquisitionMode(3)
+        # andor.SetNumberAccumulations(1)
+        # andor.SetNumberKinetics(3)
+        # andor.SetBaselineClamp(0)
+        # andor.SetPreAmpGain(2)
+
+        # andor.SetReadMode(4) # image mode
+        # # andor.SetImage(1, 1, 1, 512, 241, 340)
+        # #andor.SetImage(1, 1, 1, 512, 270, 470)
+
+
+        # andor.SetImage(hbin, vbin, hstart, hend, vstart, vend) # full image
+
+
 
         # Setup update server proxy for real-time notifications
         try:
@@ -376,16 +422,26 @@ class RecordPath(ConductorParameter):
             andor = self._andor
             preamp_gain = 2
             exposure_time = 0.001
-
+            # 2D image setting
+            hbin = 2
+            vbin = 2
+            hstart = 1
+            hend = 512
+            vstart = 341 #341
+            vend = 428
+            
             andor.AbortAcquisition()
+
             # Acquisition settings
             andor.SetOutputAmplifier(0)
             andor.SetEMGainMode(2) # Linear gain mode.
             andor.SetEMCCDGain(50)
             andor.SetExposureTime(exposure_time)
-            andor.SetShutter(1, 1, 0, 0) # open shutter
+            # andor.SetShutter(1, 1, 0, 0) # open shutter
             andor.SetHSSpeed(0, 0)
-            andor.SetVSSpeed(1)
+            vsspeed_index, _ = andor.GetFastestRecommendedVSSpeed()
+            print("[TEST] VSSPEED: "+str(vsspeed_index))
+            andor.SetVSSpeed(vsspeed_index)
             andor.SetTriggerMode(1) #external
             andor.SetAcquisitionMode(3)
             andor.SetNumberAccumulations(1)
@@ -394,23 +450,35 @@ class RecordPath(ConductorParameter):
             andor.SetPreAmpGain(preamp_gain)
 
             andor.SetReadMode(4) # image mode
-            # andor.SetImage(1, 1, 1, 512, 241, 340)
-            # andor.SetImage(1, 1, 1, 512, 270, 470)
-            hbin = 16
-            vbin = 2
-            hstart = 1
-            hend = 512
-            vstart = 341
-            vend = 428
 
             andor.SetImage(hbin, vbin, hstart, hend, vstart, vend) # full image
 
 
             andor.StartAcquisition()
-            timeout_ms = 60000
-            andor.WaitForAcquisitionTimeOut(timeout_ms)
 
-            data = andor.GetAcquiredData(3*int((hend-hstart+1)/hbin)*int((vend-vstart+1)/vbin)).reshape(3, int((vend-vstart+1)/vbin), int((hend-hstart+1)/hbin))
+            print "Image size:", (hend - hstart + 1) // hbin, (vend - vstart + 1) // vbin
+
+            # xpix, ypix = andor.GetDetector()
+            # print "Andor detector dimensions: %d x %d" % (xpix, ypix)
+
+            # timeout_ms = 60000
+            # andor.WaitForAcquisitionTimeOut(timeout_ms)
+
+            max_wait = 30 # seconds
+            for _ in range(max_wait):
+                status = andor.GetStatus()
+                if status == 'DRV_IDLE':
+                    print "Acquired Data"
+                    break
+                time.sleep(1)
+            else:
+                print "Timed out waiting for acquisition"
+                andor.AbortAcquisition()
+                return
+            imlen = int(3*((hend-hstart+1)/hbin)*((vend-vstart+1)/vbin))
+            data = andor.GetAcquiredData(imlen)
+            # print("[TEST] acquired data")
+            data = data.reshape(3, int((vend-vstart+1)/vbin), int((hend-hstart+1)/hbin))
             images = {key: data[i]
                       for i, key in enumerate(["g", "e", "bg"])}
 
@@ -448,7 +516,7 @@ class RecordPath(ConductorParameter):
                             compression_opts=self.compression_level)
 
             # print("Camera save error: writing dummy file failed.")
-            print(data_path)
+            # print(data_path)
             print('Camera temp is (C): ' + str(andor.GetTemperature()))
             print('EMCCD gain: ' + str(andor.GetEMCCDGain()))
             print("PreAmp Gain: "+str(andor.GetNumberPreAmpGains()))

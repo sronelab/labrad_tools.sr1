@@ -13,7 +13,7 @@ class SiDemod(ConductorParameter):
     autostart = False
     current_freq = 21.0e6
     timeout = 0.1
-    url="http://128.138.107.123:8080" # YeDemod in comb setup.
+    url="http://10.100.1.11:8080" # YeDemod in comb setup.
     def initialize(self, config):
         #self.inst = vxi11.Instrument('128.138.107.33')
         self.value = 8*21.0e6

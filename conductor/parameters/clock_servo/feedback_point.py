@@ -74,7 +74,7 @@ class FeedbackPoint(ConductorParameter):
             tot = andor_records[point_filename]["tot"]
 
             #if there are atoms, do servo on excitation fraction
-            if tot > 300.0:
+            if tot > 1000.0:
                 if (frac > 0.0) & (frac < 1.0):
                     control_loop.tick(side, frac)
 

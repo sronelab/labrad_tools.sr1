@@ -72,7 +72,10 @@ class Andor(object):
     def _log(self, function, error):
         self.error[function] = error
         if self.verbose:
-            print "{}: {}".format(function, ERROR_CODE[error])
+            try:
+                print "{}: {}".format(function, ERROR_CODE[error])
+            except:
+                print "{}: {}".format(function, error)
     
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """
@@ -119,6 +122,7 @@ class Andor(object):
         """
         arr = (ctypes.c_int * size)()
         error = self.dll.GetAcquiredData(ctypes.pointer(arr), size)
+        print("[[[[[[[[[[[[[[[[[[[data received")
         self._log(sys._getframe().f_code.co_name, error)
         return np.array(arr, dtype=np.uint32)
     

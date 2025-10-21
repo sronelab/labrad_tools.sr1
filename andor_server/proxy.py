@@ -123,6 +123,7 @@ class AndorProxy(object):
         """
         error, arr = self.andor_server.get_acquired_data(self.serial_number, 
                                                          size)
+        print("[[[[[[[[[[[[[[[[[[[data received")
         self._log(sys._getframe().f_code.co_name, error)
         return np.array(arr, dtype=np.uint32)
     
@@ -416,7 +417,11 @@ class AndorProxy(object):
         """
         error, status = self.andor_server.get_status(self.serial_number)
         self._log(sys._getframe().f_code.co_name, error)
-        return ERROR_CODE[status]
+        try:
+            out = ERROR_CODE[status]
+        except:
+            out = status
+        return out
 
     def GetTemperature(self):
         """ This function returns the temperature of the detector to the nearest 
