@@ -14,9 +14,22 @@ class HrShake(ConductorParameter,DG4000):
 
 
     def update(self):
+        pass
+        # request = {'f_7_5': {}}
+        # f_7_5 = self.server._get_parameter_values(request, all=False)['f_7_5']
+        # request = {'clock_fiber_aom.hr_demod_frequency': {}}
+        # f_lo = self.server._get_parameter_values(request, all=False)['clock_fiber_aom.hr_demod_frequency']
 
-        if self.value is not None:
-            self.frequency = self.value
+        # self.mod_type = 'FSK'
+        # self.fsk_source = 'EXT'
+        # self.amplitude = 1.4159
+        # self.frequency = f_lo+f_7_5
+        # self.fsk_frequency = f_lo-f_7_5
+
+        # request = {
+        #             'clock_mF.hr_shake': float(f_lo+f_7_5),
+        #             }
+        # self.server._set_parameter_values(request)  
 
 
 Parameter = HrShake

@@ -4,13 +4,13 @@ import json
 from conductor.parameter import ConductorParameter
 from rf.devices.dg4000.device import DG4000
 
-class HrFrequencyPSK(ConductorParameter,DG4000):
+class Hr_bottom_lo_fsk(ConductorParameter,DG4000):
 
     autostart = False
     priority = 3
 
     _vxi11_address = '192.168.1.37'
-    _source = 2
+    _source = 1
 
 
     def update(self):
@@ -22,9 +22,9 @@ class HrFrequencyPSK(ConductorParameter,DG4000):
             if self.value == 0:
                 pass
             else:
-                self.mod_type = 'PSK'
+                self.mod_type = 'FSK'
                 self.psk_source = 'EXT'
                 self.psk_phase = self.value
 
 
-Parameter = HrFrequencyPSK
+Parameter = Hr_bottom_lo_fsk

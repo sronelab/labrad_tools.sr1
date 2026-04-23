@@ -123,7 +123,6 @@ class AndorProxy(object):
         """
         error, arr = self.andor_server.get_acquired_data(self.serial_number, 
                                                          size)
-        print("[[[[[[[[[[[[[[[[[[[data received")
         self._log(sys._getframe().f_code.co_name, error)
         return np.array(arr, dtype=np.uint32)
     

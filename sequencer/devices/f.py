@@ -15,11 +15,11 @@ class BoardF(YeSrAnalogBoard):
     is_master = False #was true on 05/06/2022
 
     channels = [
-        YeSrAnalogChannel(loc=0, name='DC Stark D', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=0, name='Top Clock Int', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=1, name='SG382 mF clock FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=2, name='11/2 Intensity', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=3, name='9/2 Intensity', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=4, name='not in use', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=4, name='blue mot camera trig', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=5, name='9/2 FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=6, name='11/2 FM', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=7, name='Z-bias bottom', mode='auto', manual_output=0.0),

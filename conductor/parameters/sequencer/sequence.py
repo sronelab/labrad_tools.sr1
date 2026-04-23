@@ -103,7 +103,7 @@ class Sequence(ConductorParameter):
             is_triggered = self.fp.IsTriggered(0x60)
             if is_triggered:
                 return
-            time.sleep(0.01)
+            time.sleep(0.1)
 
     def _advance_on_trigger(self):
         self._wait_for_trigger()

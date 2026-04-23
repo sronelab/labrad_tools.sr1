@@ -72,11 +72,11 @@ class FeedbackPoint(ConductorParameter):
             # decipher the given dictionary...
             frac = andor_records[point_filename]["frac"]
             tot = andor_records[point_filename]["tot"]
-
             #if there are atoms, do servo on excitation fraction
-            if tot > 1000.0:
-                if (frac > 0.0) & (frac < 1.0):
-                    control_loop.tick(side, frac)
+            if tot > 1000.0 and (0.0 < frac < 1.0):
+                    control_loop.tick(side, frac, shot)
+            else:
+                control_loop._reset_input_buffer()
 
             request = {'clock_servo.control_signals.{}'.format(name): control_loop.output}
             self.server._set_parameter_values(request)

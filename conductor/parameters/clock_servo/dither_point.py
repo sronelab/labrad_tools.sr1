@@ -52,6 +52,13 @@ class DitherPoint(ConductorParameter):
             return self.locks[lock]
 
     def update(self):
+        if self.value_log[-1] is not None:
+            value = self.value_log[-1]
+            lock, side = value
+            shot_number = self.shot_number_log[-1]
+            feedback_point_value = [lock, side, shot_number]
+            request = {'clock_servo.feedback_point': feedback_point_value}
+            self.server._set_parameter_values(request)
 
         if self.value is not None:
             name, side = self.value
@@ -113,13 +120,7 @@ class DitherPoint(ConductorParameter):
                 self.server._set_parameter_values(request)
                 print("{} probe frequency: {}".format(name, output))
 
-        if self.value_log[-2] is not None:
-            value = self.value_log[-2]
-            lock, side = value
-            shot_number = self.shot_number_log[-2]
-            feedback_point_value = [lock, side, shot_number]
-            request = {'clock_servo.feedback_point': feedback_point_value}
-            self.server._set_parameter_values(request)
+        
         if self.server._get_parameter_value('andor.record_path'):
             self.value_log.append(self.value)
             self.shot_number_log.append(self.server.experiment.get('shot_number'))

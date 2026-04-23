@@ -3,7 +3,7 @@
 [info]
 name = sequencer
 version = 1.0
-description = 
+description =
 instancename = sequencer
 
 [startup]
@@ -29,13 +29,13 @@ from sequencer.exceptions import ChannelNotFound
 UPDATE_ID = 698032
 
 def master_last(devices):
-    return sorted([device_name for device_name in devices], 
+    return sorted([device_name for device_name in devices],
                   key=lambda x: devices[x].is_master)
 
 class SequencerServer(DeviceServer):
     name = 'sequencer'
     update = Signal(UPDATE_ID, 'signal: update', 's')
-    
+
     def _get_channel(self, channel_id):
         """
         expect 3 possibilities for channel_id.
@@ -52,21 +52,21 @@ class SequencerServer(DeviceServer):
         if channel is None:
             raise ChannelNotFound(channel_id)
         return channel
-    
+
     @setting(10)
     def get_channel_infos(self, c, request_json='{}'):
         request = json.loads(request_json)
         response = self._get_channel_infos(request)
         response_json = json.dumps(response)
         return response_json
-    
+
     def _get_channel_infos(self, request={}):
         if request == {}:
             request = {
                 device_name: {
                     channel.key: None
                         for channel in device.channels
-                    } 
+                    }
                     for device_name, device in self.devices.items()
                 }
         response = {}
@@ -80,21 +80,21 @@ class SequencerServer(DeviceServer):
             response.update({device_name: device_response})
         self._send_update({'channel_infos': response})
         return response
-    
+
     @setting(11)
     def channel_modes(self, c, request_json='{}'):
         request = json.loads(request_json)
         response = self._channel_modes(request)
         response_json = json.dumps(response)
         return response_json
-    
+
     def _channel_modes(self, request={}):
         if request == {}:
             request = {
                 device_name: {
                     channel.key: None
                         for channel in device.channels
-                    } 
+                    }
                     for device_name, device in self.devices.items()
                 }
         response = {}
@@ -111,21 +111,21 @@ class SequencerServer(DeviceServer):
             response.update({device_name: device_response})
         self._send_update({'channel_modes': response})
         return response
-    
+
     @setting(12)
     def channel_manual_outputs(self, c, request_json='{}'):
         request = json.loads(request_json)
         response = self._channel_manual_outputs(request)
         response_json = json.dumps(response)
         return response_json
-    
+
     def _channel_manual_outputs(self, request):
         if request == {}:
             request = {
                 device_name: {
                     channel.key: None
                         for channel in device.channels
-                    } 
+                    }
                     for device_name, device in self.devices.items()
                 }
         response = {}
@@ -149,13 +149,13 @@ class SequencerServer(DeviceServer):
 
         slave devices go after master device so they can fill in missing channel sequences (default to manual outs)
         each device thus needs its own fix_sequence_keys method
-        
+
         """
         request = json.loads(request_json)
         response = self._fix_sequence_keys(request, tmpdir)
         response_json = json.dumps(response)
         return response_json
-    
+
     def _fix_sequence_keys(self, request={}, tmpdir=True):
         response = {}
         for device_name, device_request in request.items():
@@ -163,15 +163,17 @@ class SequencerServer(DeviceServer):
             device_response = device.fix_sequence_keys(device_request, tmpdir)
             response.update({device_name: device_response})
         return response
-    
+
     @setting(14)
     def sequence(self, c, request_json='{}'):
         #try:
-            """ sequence at this point must be list of strings """
-            request = json.loads(request_json)
-            response = self._sequence(request)
-            response_json = json.dumps(response)
-            return response_json
+        """ sequence at this point must be list of strings """
+        request = json.loads(request_json)
+        print("[Debugging checkpoint] 1")
+        response = self._sequence(request)
+        print("[Debugging checkpoint] 2")
+        response_json = json.dumps(response)
+        return response_json
        # except:
         #    print('Issue with sequence!!')
 
@@ -183,6 +185,7 @@ class SequencerServer(DeviceServer):
             device = self._get_device(device_name)
             if device_request is not None:
                 device.set_sequence(device_request)
+
             device_response = device.get_sequence()
             response.update({device_name: device_response})
         self._send_update({'sequence': response})
@@ -192,10 +195,10 @@ class SequencerServer(DeviceServer):
 #    def set_sequence_fast(self, c, request_json='{}'):
 #        request = json.loads(request_json)
 #        response = self._set_sequence_fast(request)
-#    
+#
 #    def _set_sequence_fast(self, request={}):
 #        for device_name, device_request in request.items():
-#            reactor.callInThread(self._set_device_sequence_fast, device_name, 
+#            reactor.callInThread(self._set_device_sequence_fast, device_name,
 #                                 device_request)
 #
 #    def _set_device_sequence_fast(self, name, request=None):
@@ -209,7 +212,7 @@ class SequencerServer(DeviceServer):
         response = self._running(request)
         response_json = json.dumps(response)
         return response_json
-    
+
     def _running(self, request={}):
         if request == {}:
             request = {device_name: None for device_name in self.devices}
@@ -225,7 +228,7 @@ class SequencerServer(DeviceServer):
             response.update({device_name: device_response})
         self._send_update({'running': response})
         return response
-    
+
     @setting(16)
     def is_busy(self, c, request_json='{}'):
         request = json.loads(request_json)
@@ -244,10 +247,10 @@ class SequencerServer(DeviceServer):
             device_response = device.get_is_device_writing()
             response.update({device_name: device_response})
         return response
-    
+
 Server = SequencerServer()
-    
+
 if __name__ == "__main__":
     from labrad import util
-    reactor.suggestThreadPoolSize(4)
+    reactor.suggestThreadPoolSize(10)
     util.runServer(Server)

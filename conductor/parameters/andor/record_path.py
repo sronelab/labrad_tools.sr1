@@ -21,26 +21,28 @@ class RecordPath(ConductorParameter):
     record_types = {
         "readout_pmt":"fluorescence",
         "readout_nz0":"fluorescence",
-        "readout_nz0_coherent_minus":"fluorescence",
-        "readout_nz0_coherent_plus":"fluorescence",
+        "readout_pmt_coherent_minus":"fluorescence",
+        "readout_pmt_coherent_plus":"fluorescence",
         "readout_erasure":"fluorescence",
         "readout_pmtTRIG":"fluorescence",
         "readout_pmt_2Dimg":"fluorescence2D",
 	    "readout_pmt_MOT": "fluorescence",
         "readout_pmt_double":"fluorescence_double",
-        "take_one_image_vac_lifetime":"fluorescence2D_single_image"
+        "take_one_image_vac_lifetime":"fluorescence2D_single_image",
+        "readout_absorption":"fluorescence",
         }
     record_sequences = [
         'readout_pmt',
         'readout_erasure',
         "readout_nz0",
-        "readout_nz0_coherent_minus",
-        "readout_nz0_coherent_plus",
+        "readout_pmt_coherent_minus",
+        "readout_pmt_coherent_plus",
         "readout_pmt_2Dimg",
         "readout_pmtTRIG",
 	    "readout_pmt_MOT",
         "readout_pmt_double",
-        "take_one_image_vac_lifetime"
+        "take_one_image_vac_lifetime",
+        "readout_absorption"
         ]
 
     data_filename = '{}.andor.json'
@@ -201,15 +203,12 @@ class RecordPath(ConductorParameter):
         """
         Take 1D image.
         """
-        data_path = os.path.join(self.data_directory, self.value)
-
         andor = self._andor
+        andor.AbortAcquisition()
+        data_path = os.path.join(self.data_directory, self.value)
 
         preamp_gain = 2
         exposure_time = 0.001
-
-
-        andor.AbortAcquisition()
 
         ######################## Acquisition settings commented for more responsivity ##########################
         # andor.SetOutputAmplifier(0)
@@ -243,6 +242,7 @@ class RecordPath(ConductorParameter):
         andor.StartAcquisition()
         timeout_ms = 180000
         andor.WaitForAcquisitionTimeOut(timeout_ms)
+        time_acquire = time.time()
         temp_image_three = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
         time_start_write = time.time()
 
@@ -262,6 +262,7 @@ class RecordPath(ConductorParameter):
         preamp_gain = andor.GetNumberPreAmpGains()
 
         data_string = {
+            'time_acquire': time_acquire,
             'time': time_start_write,
             'g': temp_image_g.tolist(),
             'e': temp_image_e.tolist(),
@@ -312,7 +313,6 @@ class RecordPath(ConductorParameter):
                 self._update_proxy.emit(update_data)
             except Exception as e:
                 print("Failed to send real-time update: {}".format(e))
-
 
         return frac, tot
 

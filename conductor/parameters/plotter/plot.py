@@ -25,8 +25,7 @@ class Plot(ConductorParameter):
                 experiment_directory = os.path.join(self.data_directory, experiment_name)
                 settings['data_path'] = experiment_directory
 
-                # Fire-and-forget approach - don't wait for response at all
-                reactor.callInThread(self._plot_fire_and_forget, settings)
+                self._plot_fire_and_forget(settings)
 
             except:
                 traceback.print_exc()
@@ -36,8 +35,8 @@ class Plot(ConductorParameter):
         try:
             self.cxn.plotter.plot(json.dumps(settings))
         except:
-            # Silently ignore all failures to prevent any interference
-            pass
+            print("Error in fire-and-forget plot call:")
+            traceback.print_exc()
 
 Parameter = Plot
 

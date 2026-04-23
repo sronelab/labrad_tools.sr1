@@ -19,7 +19,7 @@ class BoardE(YeSrAnalogBoard):
         YeSrAnalogChannel(loc=2, name='X-bias', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=3, name='Y-bias', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=4, name='Z-bias top', mode='auto', manual_output=0.0),
-        YeSrAnalogChannel(loc=5, name='DC Stark A', mode='auto', manual_output=0.0),
+        YeSrAnalogChannel(loc=5, name='bottom clock intensity', mode='auto', manual_output=0.0),
         YeSrAnalogChannel(loc=6, name='DC Stark B', mode='auto', manual_output=0.0),
         # YeSrAnalogChannel(loc=7, name='Fixed 813 setpoint', mode='manual', manual_output=-0.54), # lattice voltage zero level.
         YeSrAnalogChannel(loc=7, name='Fixed 813 setpoint', mode='manual', manual_output=-2.16), # AA changed 20240425, lattice voltage zero level.

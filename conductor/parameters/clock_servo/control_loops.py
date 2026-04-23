@@ -22,6 +22,8 @@ class DitherIII(object):
         self.xbuffer = deque([0., 0.], maxlen=2)
         self.ybuffer = deque([0., 0.], maxlen=2)
         self.error = None
+        self.last_update_shot = None
+        self.max_shot_gap = 10
 
         self.set_parameters(**kwargs)
 
@@ -45,10 +47,17 @@ class DitherIII(object):
             'b_2': -1.,
         }
 
-    def tick(self, side, value):
+    def tick(self, side, value, shot_number):
         self.input_buffer[side].append(value)
         if np.product([bool(v) for v in self.input_buffer.values()]):
+            if self.last_update_shot is not None:
+                shot_gap = shot_number - self.last_update_shot
+                if shot_gap > self.max_shot_gap:
+                    self._reset_xybuffers()
+                    print("PIID Soft Reset due to large gap: {} shots.".format(shot_gap))
+
             self.update_output()
+            self.last_update_shot = shot_number
         return self.output
 
     def update_output(self):
@@ -82,16 +91,20 @@ class DitherIII(object):
 
         return y
 
-    def reset(self):
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
-
+    def _reset_input_buffer(self):
         self.input_buffer = {
             'left': deque([], maxlen=1),
             'right': deque([], maxlen=1),
         }
+    
+    def _reset_xybuffers(self):
+        if self.output is not None:
+            self.output_offset = self.output
+
+        for x in self.xbuffer:
+            x = 0
+        for y in self.ybuffer:
+            y = 0
 
 class PID(object):
     def __init__(self, **kwargs):
@@ -112,6 +125,8 @@ class PID(object):
         self.xbuffer = deque([0., 0.], maxlen=2)
         self.ybuffer = deque([0., 0.], maxlen=2)
         self.error = None
+        self.last_update_shot = None
+        self.max_shot_gap = 10
 
         self.set_parameters(**kwargs)
 
@@ -133,11 +148,17 @@ class PID(object):
             'a_2': 1.
         }
 
-    def tick(self, side, value):
+    def tick(self, side, value, shot_number):
         self.input_buffer[side].append(value)
-        print 'side', side
         if np.product([bool(v) for v in self.input_buffer.values()]):
+            if self.last_update_shot is not None:
+                shot_gap = shot_number - self.last_update_shot
+                if shot_gap > self.max_shot_gap:
+                    self._reset_xybuffers()
+                    print("PIID Soft Reset due to large gap: {} shots.".format(shot_gap))
+
             self.update_output()
+            self.last_update_shot = shot_number
         return self.output
 
     def update_output(self):
@@ -172,16 +193,20 @@ class PID(object):
 
         return y
 
-    def reset(self):
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
-
+    def _reset_input_buffer(self):
         self.input_buffer = {
             'left': deque([], maxlen=1),
             'right': deque([], maxlen=1),
         }
+    
+    def _reset_xybuffers(self):
+        if self.output is not None:
+            self.output_offset = self.output
+
+        for x in self.xbuffer:
+            x = 0
+        for y in self.ybuffer:
+            y = 0
 
 class PIID(object):
     def __init__(self, **kwargs):
@@ -203,6 +228,9 @@ class PIID(object):
         self.xbuffer = deque([0., 0., 0.], maxlen=3)
         self.ybuffer = deque([0., 0., 0.], maxlen=3)
         self.error = None
+
+        self.last_update_shot = None
+        self.max_shot_gap = 10
 
         self.set_parameters(**kwargs)
 
@@ -228,10 +256,19 @@ class PIID(object):
             'b_3': -1.,
         }
 
-    def tick(self, side, value):
+    def tick(self, side, value, shot_number):
+        if side == 'right' and not self.input_buffer['left']:
+            return self.output
         self.input_buffer[side].append(value)
         if np.product([bool(v) for v in self.input_buffer.values()]):
+            if self.last_update_shot is not None:
+                shot_gap = shot_number - self.last_update_shot
+                if shot_gap > self.max_shot_gap:
+                    self._reset_xybuffers()
+                    print("PIID Soft Reset due to large gap: {} shots.".format(shot_gap))
+
             self.update_output()
+            self.last_update_shot = shot_number
         return self.output
 
     def update_output(self):
@@ -270,16 +307,20 @@ class PIID(object):
 
         return y
 
-    def reset(self):
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
-
+    def _reset_input_buffer(self):
         self.input_buffer = {
             'left': deque([], maxlen=1),
             'right': deque([], maxlen=1),
         }
+    
+    def _reset_xybuffers(self):
+        if self.output is not None:
+            self.output_offset = self.output
+
+        for x in self.xbuffer:
+            x = 0
+        for y in self.ybuffer:
+            y = 0
 
 
 class Dither(object):

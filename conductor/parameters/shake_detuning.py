@@ -14,11 +14,14 @@ class ShakeDetuning(ConductorParameter):
     priority = 4
     autostart = False
 
+    # def initialize(self, config):
+    #     request = {
+    #                 'clock_mF.hr_shake': float(138e6),
+    #                 }
+    #     self.server._set_parameter_values(request)
+
 
     def update(self):
-
-
-
 
         if self.value is not None:
             shake_freq = self.value

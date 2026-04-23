@@ -47,25 +47,47 @@ class ProbeDetuningMF(ConductorParameter):
             f_bsb_m = self.server._get_parameter_values(request, all=False)['f_bsb_m']
             request = {'f_bsb_p': {}}
             f_bsb_p = self.server._get_parameter_values(request, all=False)['f_bsb_p']
+            request = {'follow_lock': {}}
+            follow_lock = self.server._get_parameter_values(request, all=False)['follow_lock']
             mF_value = self.value
 
 
-            #If we threw a -1 we want to update mF to follow the dithers.
-            if mF_value  == -1:
-                print('-1 thrown in probe detunings')
+            #If we threw a 1 we want to update mF to follow the dithers.
+            if follow_lock  == 1:
+                print('follow clock lock in spin transfer detunings')
                 request = {'clock_servo.control_signals.+9/2':{},'clock_servo.control_signals.-9/2':{}}
                 temporary_data = self.server._get_parameter_values(request, all=False)
                 f_minus = temporary_data['clock_servo.control_signals.-9/2']
                 f_plus = temporary_data['clock_servo.control_signals.+9/2']
-                print(f_minus,f_plus)
                 mF_value = (f_minus+f_plus)/2.
+                self.value=mF_value
+                print(' Top Clock Center Frequency: ' + str(mF_value))
 
+            #For WS-Lock
+            elif follow_lock  == 2:
+                print('follow ws lock in spin transfer detunings')
+                request = {'clock_servo.control_signals.+9/2a':{},'clock_servo.control_signals.-9/2a':{},
+                            'clock_servo.control_signals.+9/2b':{},'clock_servo.control_signals.-9/2b':{}}
+                temporary_data = self.server._get_parameter_values(request, all=False)
+                f_minus_a = temporary_data['clock_servo.control_signals.-9/2a']
+                f_plus_a = temporary_data['clock_servo.control_signals.+9/2a']
+                f_minus_b = temporary_data['clock_servo.control_signals.-9/2b']
+                f_plus_b = temporary_data['clock_servo.control_signals.+9/2b']
 
+                mF_value = (f_minus_a+f_plus_a+f_minus_b+f_plus_b)/4.0
+                self.value=mF_value
+                print(' Top Clock Center Frequency: ' + str(mF_value))
+
+            request = {'probe_detuning_mF': float(mF_value)}
+            self.server._set_parameter_values(request)
 
             f_vco = 155.504e6/2.0
 
             SL_FNC_table_AOM = 30.0e6
             SL_FNC_comb = 95.520e6 + 2*SL_FNC_table_AOM # updated as of 2021-04-15
+
+            print('MF bvalue mF value')
+            print(mF_value)
 
             f_fnc = 2.0*(-1.0*float(mF_value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
             f_steer = f_fnc/2.0 - f_vco

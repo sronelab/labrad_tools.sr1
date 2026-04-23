@@ -14,11 +14,7 @@ class ShakeAmplitude(ConductorParameter):
     priority = 4
     autostart = False
 
-
     def update(self):
-
-
-
 
         if self.value is not None:
             shake_amp = self.value
@@ -27,9 +23,6 @@ class ShakeAmplitude(ConductorParameter):
                     'clock_mF.hr_shake_vpp': float(shake_amp),
                     }
             self.server._set_parameter_values(request)
-
-
-
 
 Parameter =  ShakeAmplitude
 
