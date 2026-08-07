@@ -17,6 +17,10 @@ class atom_position(ConductorParameter):
             'y': 0,
             'error_x': 0,
             'error_y': 0,
+            "sigma_x": 0,
+            "sigma_y": 0,
+            "sigma_x_error": 0,
+            "sigma_y_error": 0,
             }
 
 Parameter = atom_position

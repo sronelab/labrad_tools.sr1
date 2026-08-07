@@ -165,6 +165,10 @@ class RecordPath(ConductorParameter):
             'y': fit_result['y0'],
             'error_x': fit_result['x0_error'],
             'error_y': fit_result['y0_error'],
+            "sigma_x": fit_result['sigma_x'],
+            "sigma_y": fit_result['sigma_y'],
+            "sigma_x_error": fit_result['sigma_x_error'],
+            "sigma_y_error": fit_result['sigma_y_error'],
         }
         parameter = self.server.parameters["atom_position"]
         parameter.value.update(value)
