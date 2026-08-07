@@ -13,7 +13,7 @@ defult_value = {
 }
 class Rigol(ConductorParameter):
     priority = 1
-    autostart = True
+    autostart = False
     call_in_thread = True
 
     def initialize(self,config):
