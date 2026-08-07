@@ -73,9 +73,9 @@ class Andor(object):
         self.error[function] = error
         if self.verbose:
             try:
-                print "{}: {}".format(function, ERROR_CODE[error])
+                print("{}: {}".format(function, ERROR_CODE[error]))
             except:
-                print "{}: {}".format(function, error)
+                print("{}: {}".format(function, error))
     
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """
@@ -138,7 +138,9 @@ class Andor(object):
         arr = (ctypes.c_int * size)()
         error = self.dll.GetAcquiredData16(ctypes.pointer(arr), size)
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint16)
+        img = np.array(arr, dtype=np.uint16)
+        img_to_send = img.astype(np.int32)
+        return img_to_send
 
     def GetAcquisitionProgress(self):
         """ This function will return information on the progress of the 

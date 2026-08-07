@@ -1,6 +1,5 @@
-import sys
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
 import traceback
 import numpy as np
@@ -9,7 +8,7 @@ import json
 from client_tools.connection import connection
 from client_tools.widgets import SuperSpinBox
 
-class AnalogVoltageManualClient(QtGui.QGroupBox):
+class AnalogVoltageManualClient(QtWidgets.QDialog):
     hasNewVoltage = False
     mouseHover = pyqtSignal(bool)
     layout = None
@@ -24,15 +23,15 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
 
     def __init__(self, reactor, cxn=None, parent=None):
         try:
-            QtGui.QDialog.__init__(self)
+            super(AnalogVoltageManualClient, self).__init__(parent)
             self.reactor = reactor
             self.cxn = None
             self.parent = parent
+            self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
             self.sequencer_update_id = np.random.randint(0, 2**31 - 1)
-            
             self.connect()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             traceback.print_exc()
 
     @inlineCallbacks
@@ -40,13 +39,9 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
         if self.cxn is None:
             self.cxn = connection()
             yield self.cxn.connect()
-        print 1
         self.populateGUI()
-        print 2
-        yield self.connectSignals()
-        print 3
         yield self.getChannelInfo()
-        print 4
+        yield self.connectSignals()
         self.updateDisplay()
 
     @inlineCallbacks
@@ -54,23 +49,22 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
         yield None
 
     def populateGUI(self):
-        self.mode_button = QtGui.QPushButton()
+        self.mode_button = QtWidgets.QPushButton()
         self.mode_button.setCheckable(1)
         self.mode_button.setFixedWidth(self.spinbox_width)
         
-        self.voltage_box = SuperSpinBox(self.voltage_range, self.voltage_units,
-                                        self.voltage_digits)
+        self.voltage_box = SuperSpinBox(self.voltage_range, self.voltage_units, self.voltage_digits)
         self.voltage_box.setFixedWidth(self.spinbox_width)
         self.voltage_box.display(0)
 
         if self.layout is None:
-            self.layout = QtGui.QGridLayout()
+            self.layout = QtWidgets.QGridLayout()
 
-        self.layout.addWidget(QtGui.QLabel('<b>'+self.name+'</b>'), 1, 0, 1, 1,
-                              QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(QtWidgets.QLabel('<b>'+self.name+'</b>'), 1, 0, 1, 1,
+                              QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.layout.addWidget(self.mode_button, 1, 1)
-        self.layout.addWidget(QtGui.QLabel('Voltage: '), 2, 0, 1, 1,
-                              QtCore.Qt.AlignRight)
+        self.layout.addWidget(QtWidgets.QLabel('Voltage: '), 2, 0, 1, 1,
+                              QtCore.Qt.AlignmentFlag.AlignRight)
         self.layout.addWidget(self.voltage_box, 2, 1)
         self.setLayout(self.layout)
         self.setFixedSize(100 + self.spinbox_width, 90)
@@ -103,14 +97,23 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
 
     def updateDisplay(self):
         self.free = False
-        if self.mode == 'manual':
-            self.mode_button.setChecked(1)
-            self.mode_button.setText('Manual')
-        if self.mode == 'auto':
-            self.mode_button.setChecked(0)
-            self.mode_button.setText('Auto')
-        self.voltage_box.display(float(self.manual_output))
-        self.free = True
+        try:
+            if self.mode == 'manual':
+                self.mode_button.setChecked(1)
+                self.mode_button.setText('Manual')
+            if self.mode == 'auto':
+                self.mode_button.setChecked(0)
+                self.mode_button.setText('Auto')
+                
+            if self.manual_output is not None:
+                try:
+                    self.voltage_box.display(float(self.manual_output))
+                except Exception as e:
+                    print(f"Error {e}: Could not convert {self.manual_output} to float")
+            else:
+                self.voltage_box.display(114514.0)
+        finally:
+            self.free = True
 
     def receive_sequencer_update(self, c, signal_json):
         signal = json.loads(signal_json)
@@ -129,7 +132,7 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
         self.mouseHover.emit(True)
 
     def leaveEvent(self, c):
-        self.mouseHover.emit(True)
+        self.mouseHover.emit(False)
 
     @inlineCallbacks
     def onNewMode(self):
@@ -165,22 +168,30 @@ class AnalogVoltageManualClient(QtGui.QGroupBox):
     @inlineCallbacks	
     def reinit(self): 
         self.setDisabled(False)
-        server = yield self.cxn.get_server(self.servername)
-        yield server.signal__update(self.update_id, context=self.context)
-        yield server.addListener(listener=self.receive_update, source=None,
-                                 ID=self.update_id, context=self.context)
+        server = yield self.cxn.get_server(self.sequencer_servername)
+        yield server.signal__update(self.sequencer_update_id, context=self.context)
+        yield server.addListener(listener=self.receive_sequencer_update, source=None,
+                                 ID=self.sequencer_update_id, context=self.context)
         yield server.send_update()
 
 
     def disable(self):
         self.setDisabled(True)
     
-    @inlineCallbacks
     def closeEvent(self, event):
-        sequencer = yield self.cxn.get_server(self.sequencer_servername)
-        yield sequencer.signal__update(self.sequencer_update_id)
-        yield sequencer.removeListener(listener=self.receive_sequencer_update, source=None,
-                                    ID=self.sequencer_update_id)
+        def do_cleanup(sequencer):
+            sequencer.signal__update(self.sequencer_update_id)
+            sequencer.removeListener(
+                listener=self.receive_sequencer_update, 
+                source=None, 
+                ID=self.sequencer_update_id
+            )
+
+        if self.cxn is not None:
+            d = self.cxn.get_server(self.sequencer_servername)
+            d.addCallback(do_cleanup)
+            d.addErrback(lambda f: print(f"Cleanup error: {f.getErrorMessage()}"))
+        
         if self.parent is None:
             self.reactor.stop()
 

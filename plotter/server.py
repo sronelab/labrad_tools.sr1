@@ -18,29 +18,31 @@ timeout = 20
 
 import imp
 import json
-import matplotlib as mpl
-mpl.use('Agg')
+
+# mpl.use("Agg")
 import matplotlib.pyplot as plt
-import os
+
+plt.style.use("/home/srgang/labrad_tools.sr1/plotter/plot_style.mplstyle")
 import gc
-import sys
-import weakref
+
 # import StringIO
 import io
-from time import time
+import os
+import sys
+import weakref
 from collections import OrderedDict, deque
+from time import time
 
-from autobahn.twisted.websocket import WebSocketServerProtocol
-from autobahn.twisted.websocket import WebSocketServerFactory
+from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
 from labrad.server import setting
 from twisted.internet import reactor
-
 
 from server_tools.threaded_server import ThreadedServer
 
 WEBSOCKET_PORT = 9000
 MAX_CONNECTIONS = 50
 MODULE_CACHE_SIZE = 10
+
 
 class MyServerProtocol(WebSocketServerProtocol):
     connections = set()  # Use set instead of list for O(1) removal
@@ -59,7 +61,7 @@ class MyServerProtocol(WebSocketServerProtocol):
 
     @classmethod
     def send_figure(cls, figure):
-        print('num connections', len(cls.connections))
+        print("num connections", len(cls.connections))
         # Create copy of connections to avoid modification during iteration
         active_connections = list(cls.connections)
         failed_connections = []
@@ -89,7 +91,7 @@ class MyServerProtocol(WebSocketServerProtocol):
         if isBinary:
             print("Binary message received: {0} bytes".format(len(payload)))
         else:
-            print("Text message received: {0}".format(payload.decode('utf8')))
+            print("Text message received: {0}".format(payload.decode("utf8")))
 
         # echo back message verbatim
         self.sendMessage(payload, isBinary)
@@ -99,8 +101,9 @@ class MyServerProtocol(WebSocketServerProtocol):
         self.connections.discard(self)
         print("WebSocket connection closed: {0}".format(reason))
 
+
 class PlotterServer(ThreadedServer):
-    name = 'plotter'
+    name = "plotter"
     is_plotting = False
 
     # a field for silicon frequency. Clock comparision live update purpose.
@@ -113,8 +116,8 @@ class PlotterServer(ThreadedServer):
     _plot_queue = None
 
     def initServer(self):
-        """ socket server """
-        url = u"ws://0.0.0.0:{}".format(WEBSOCKET_PORT)
+        """socket server"""
+        url = "ws://0.0.0.0:{}".format(WEBSOCKET_PORT)
         factory = WebSocketServerFactory()
         factory.protocol = MyServerProtocol
         reactor.listenTCP(WEBSOCKET_PORT, factory)
@@ -123,7 +126,7 @@ class PlotterServer(ThreadedServer):
         self._plot_queue = deque(maxlen=1)
 
     def stopServer(self):
-        """ socket server """
+        """socket server"""
         MyServerProtocol.close_all_connections()
         # Clear module cache on shutdown
         self._module_cache.clear()
@@ -141,7 +144,7 @@ class PlotterServer(ThreadedServer):
 
         # Load new module
         try:
-            module_name = os.path.split(path)[-1].strip('.py')
+            module_name = os.path.split(path)[-1].strip(".py")
             module = imp.load_source(module_name, path)
 
             # Add to cache
@@ -152,7 +155,10 @@ class PlotterServer(ThreadedServer):
                 oldest_key = next(iter(self._module_cache))
                 old_module = self._module_cache.pop(oldest_key)
                 # Clean up old module references
-                if hasattr(old_module, '__name__') and old_module.__name__ in sys.modules:
+                if (
+                    hasattr(old_module, "__name__")
+                    and old_module.__name__ in sys.modules
+                ):
                     try:
                         del sys.modules[old_module.__name__]
                     except KeyError:
@@ -167,7 +173,7 @@ class PlotterServer(ThreadedServer):
             raise
 
     @setting(0)
-    def plot(self, c, settings_json='{}'):
+    def plot(self, c, settings_json="{}"):
         settings = json.loads(settings_json)
 
         # Add request to queue (replaces any existing queued request)
@@ -175,21 +181,19 @@ class PlotterServer(ThreadedServer):
 
         # Start processing queue if not currently plotting
         if not self.is_plotting:
-            reactor.callInThread(self._plot_with_queue)
+            reactor.callLater(0, reactor.callInThread, self._plot_with_queue)
 
     def _plot_with_queue(self):
         """Process queued plot requests until queue is empty."""
-        while self._plot_queue and not self.is_plotting:
+        if self._plot_queue and not self.is_plotting:
             try:
                 settings = self._plot_queue.popleft()
                 self._plot(settings)
             except IndexError:
                 # Queue became empty between check and popleft
-                break
+                pass
             except Exception as e:
-                print('Error processing queued plot: {0}'.format(e))
-                # Continue processing remaining items in queue
-                continue
+                print("Error processing queued plot: {0}".format(e))
 
     def _plot(self, settings):
         fig = None
@@ -198,49 +202,42 @@ class PlotterServer(ThreadedServer):
 
         try:
             self.is_plotting = True
-            print('plotting')
-            path = settings['plotter_path']
-            function_name = settings['plotter_function'] # name of function that will process data
+            print("plotting")
+            path = settings["plotter_path"]
+            function_name = settings[
+                "plotter_function"
+            ]  # name of function that will process data
 
             # Use cached module instead of loading fresh each time
             module = self._get_cached_module(path, function_name)
             function = getattr(module, function_name)
             fig = function(settings)
+            plt.gcf().set_size_inches(9, 6)
+            fig.tight_layout()
             buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=200)
+            fig.savefig(buf, format="png", dpi=200)
             buf.seek(0)
             figure_data = buf.read()
             MyServerProtocol.send_figure(figure_data)
-            print('done plotting')
+            print("done plotting")
 
         except Exception as e:
-            print('failed plotting: {0}'.format(e))
+            print("failed plotting: {0}".format(e))
             raise e
         finally:
             self.is_plotting = False
+            plt.close("all")
 
-            # Comprehensive cleanup to prevent memory leaks
-            try:
-                if fig is not None:
-                    plt.close(fig)
-                    # Clear matplotlib's internal figure manager
-                    if hasattr(fig, 'number'):
-                        plt.close(fig.number)
-            except Exception as e:
-                print("Error closing figure: {0}".format(e))
+            if buf is not None:
+                buf.close()
 
-            try:
-                if buf is not None:
-                    buf.close()
-            except Exception as e:
-                print("Error closing buffer: {0}".format(e))
-
-            # Clear references
+            # Clear all references
             fig = None
             buf = None
             figure_data = None
+            settings = None  # Add this
 
-            # Force garbage collection
+            # Force immediate garbage collection
             gc.collect()
 
     # @setting(1)
@@ -253,4 +250,8 @@ Server = PlotterServer
 
 if __name__ == "__main__":
     from labrad import util
+
+if __name__ == "__main__":
+    from labrad import util
+
     util.runServer(Server())

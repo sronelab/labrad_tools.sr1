@@ -1,21 +1,19 @@
-import sys
 import json
-from PyQt4 import QtGui, QtCore
+from PyQt6 import QtCore, QtWidgets
 from twisted.internet.defer import inlineCallbacks, returnValue
 import numpy as np
+
 import matplotlib
-matplotlib.use('Qt4Agg')
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
+matplotlib.use('qtagg')
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
-from client_tools.connection import connection
 from client_tools.widgets import SuperSpinBox
-from sequencer.clients.helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
+from sequencer.clients.helpers import get_sequence_parameters, substitute_sequence_parameters
 from sequencer.devices.yesr_analog_board.ramps import RampMaker
 
-class ParameterWidget(QtGui.QWidget):
+class ParameterWidget(QtWidgets.QWidget):
     def __init__(self, ramp_type, ramp):
         """
         parameters is [(parameter_label, (range, suffixes, num_decimals)),]
@@ -26,62 +24,58 @@ class ParameterWidget(QtGui.QWidget):
         self.populate()
 
     def populate(self):
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.pboxes = {}
-        if self.ramp_type is 'sub':
+        if self.ramp_type == 'sub':
             r, s, n = dict(self.parameters)['dt']
             label, self.pboxes['dt'] = self.make_pbox('dt', r, s, n)
-            self.subbox = QtGui.QTextEdit()
-            self.subbox.setLineWrapMode(0)
+            self.subbox = QtWidgets.QTextEdit()
+            self.subbox.setLineWrapMode(QtWidgets.QTextEdit.LineWrapMode.NoWrap)
             self.subbox.setFixedWidth(80+30+2)
             self.subbox.setFixedHeight(4*20)
-            self.subbox.setHorizontalScrollBarPolicy(1)
-            self.subbox.setVerticalScrollBarPolicy(1)
             self.subbox.setText('')
-            self.edit_button = QtGui.QPushButton('Edit')
+            self.edit_button = QtWidgets.QPushButton('Edit')
             self.layout.addWidget(self.subbox)
             self.layout.addWidget(self.edit_button)
-
         else:
             for i, (p,( r, s, n)) in enumerate(self.parameters):
                 label, self.pboxes[p] = self.make_pbox(*(p, r, s, n))
-                self.layout.addWidget(QtGui.QLabel(label), i, 0)
+                self.layout.addWidget(QtWidgets.QLabel(label), i, 0)
                 self.layout.addWidget(self.pboxes[p], i, 1)
         self.setFixedWidth(80+30+4)
-
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.addWidget(QtGui.QFrame())
+        self.layout.addWidget(QtWidgets.QFrame())
         self.setLayout(self.layout)
 
     def make_pbox(self, p, r, s, n):
         pbox = SuperSpinBox(r, s, n)
         pbox.display(1)
-        label = QtGui.QLabel(p+': ')
+        label = QtWidgets.QLabel(p+': ')
         label.setFixedWidth(30)
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         pbox.setFixedWidth(80)
         pbox.setFixedHeight(20)
         return p, pbox
 
-class RampColumn(QtGui.QGroupBox):
+class RampColumn(QtWidgets.QGroupBox):
     def __init__(self, RampMaker):
         super(RampColumn, self).__init__(None)
         self.ramp_maker = RampMaker
         self.populate()
 
     def populate(self):
-        self.add = QtGui.QPushButton('+')
-        self.dlt = QtGui.QPushButton('-')
-        self.ramp_select = QtGui.QComboBox()
+        self.add = QtWidgets.QPushButton('+')
+        self.dlt = QtWidgets.QPushButton('-')
+        self.ramp_select = QtWidgets.QComboBox()
         self.ramp_select.addItems(self.ramp_maker.available_ramps.keys())
         self.parameter_widgets = {k: ParameterWidget(k, ramp) for 
                 k, ramp in self.ramp_maker.available_ramps.items()}
-        self.stack = QtGui.QStackedWidget()
+        self.stack = QtWidgets.QStackedWidget()
         for k, pw in self.parameter_widgets.items():
             self.stack.addWidget(pw)
         
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.addWidget(self.add, 0, 0)
         self.layout.addWidget(self.dlt, 0, 1)
         self.layout.addWidget(self.ramp_select, 0, 2)
@@ -121,18 +115,18 @@ class RampColumn(QtGui.QGroupBox):
             ramp.update({'seq': eval('['+str(self.stack.currentWidget().subbox.toPlainText())+']')})
         return ramp
 
-class RampTable(QtGui.QWidget):
+class RampTable(QtWidgets.QWidget):
     def __init__(self, RampMaker):
-        QtGui.QDialog.__init__(self)
+        QtWidgets.QDialog.__init__(self)
         self.ramp_maker = RampMaker
         self.populate()
 
     def populate(self):
         self.cols = [RampColumn(self.ramp_maker) for i in range(100)]
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         for c in self.cols:
             self.layout.addWidget(c)
-        self.layout.addWidget(QtGui.QFrame())
+        self.layout.addWidget(QtWidgets.QFrame())
         self.layout.setSpacing(2)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -164,7 +158,7 @@ class MplCanvas(FigureCanvas):
             self.ax.set_ylim(ylim)
             self.ax.set_xlim(xlim)
 
-class AnalogVoltageEditor(QtGui.QDialog):
+class AnalogVoltageEditor(QtWidgets.QDialog):
     sequence_parameters = {}
     def __init__(self, channel, sequence, cxn, reactor, parent=None):
         super(AnalogVoltageEditor, self).__init__(parent)
@@ -194,19 +188,19 @@ class AnalogVoltageEditor(QtGui.QDialog):
         self.canvas = MplCanvas()
         self.nav = NavigationToolbar(self.canvas, self)
         self.ramp_table = RampTable(self.ramp_maker)
-        self.ramp_scroll = QtGui.QScrollArea()
-        self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok 
-                                              | QtGui.QDialogButtonBox.Cancel, 
-                                              QtCore.Qt.Horizontal, self)
+        self.ramp_scroll = QtWidgets.QScrollArea()
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok 
+                                              | QtWidgets.QDialogButtonBox.StandardButton.Cancel, 
+                                              QtCore.Qt.Orientation.Horizontal, self)
 
         self.ramp_scroll.setWidget(self.ramp_table)
         self.ramp_scroll.setFixedHeight(self.ramp_table.height()
                                         + self.ramp_scroll.horizontalScrollBar().height()
                                         - 10)
         self.ramp_scroll.setWidgetResizable(True)
-        self.buttons.button(QtGui.QDialogButtonBox.Ok).setDefault(False)
+        self.buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setDefault(False)
         
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
@@ -275,12 +269,12 @@ class AnalogVoltageEditor(QtGui.QDialog):
         self.loading = True
         for c in self.ramp_table.cols:
             c.hide()
-
+        
         for s, c in zip(self.sequence[self.channel], self.ramp_table.cols):
             ramp_type = s['type']
             c.show()
             c.ramp_select.setCurrentIndex(c.ramp_select.findText(ramp_type))
-	    for k in c.parameter_widgets[ramp_type].pboxes.keys():
+            for k in c.parameter_widgets[ramp_type].pboxes.keys():
                 c.parameter_widgets[ramp_type].pboxes[k].display(s[k])
                 
         self.loading = False
@@ -289,7 +283,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
     def add_column(self, i):
         def ac():
             sequence = self.get_sequence()
-	    for c in sequence.keys():
+            for c in sequence.keys():
                 sequence[c].insert(i, sequence[c][i])
             self.set_sequence(sequence)
         return ac
@@ -297,7 +291,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
     def dlt_column(self, i):
         def dc():
             sequence = self.get_sequence()
-	    for c in sequence.keys():
+            for c in sequence.keys():
                 sequence[c].pop(i)
             self.set_sequence(sequence)
         return dc
@@ -326,13 +320,13 @@ class AnalogVoltageEditor(QtGui.QDialog):
         return self.get_sequence()
 
     def keyPressEvent(self, c):
-        if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
-            if c.key() == QtCore.Qt.Key_Return:
+        if QtWidgets.QApplication.keyboardModifiers() == QtCore.Qt.KeyboardModifier.ControlModifier:
+            if c.key() == QtCore.Qt.Key.Key_Return:
                 self.buttons.accepted.emit()
-            if c.key() == QtCore.Qt.Key_Q:
+            if c.key() == QtCore.Qt.Key.Key_Q:
                 self.buttons.rejected.emit()
         else:
-            QtGui.QWidget().keyPressEvent(c)
+            super().keyPressEvent(c)
 
 #class FakeConfig(object):
 #    def __init__(self):
@@ -342,7 +336,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
 #if __name__ == '__main__':
 #    SEQUENCE = {'a': [{'type': 'sexp', 'dt': 1.0, 'vi': 2.0, 'vf': 5, 'tau': .5, 'pts': 5}, 
 #                      {'type': 'exp', 'dt': 1.0, 'vf': 0, 'tau': -.5, 'pts': 5}]}
-#    a = QtGui.QApplication([])
+#    a = QtWidgets.QApplication([])
 #    import qt4reactor 
 #    qt4reactor.install()
 #    from twisted.internet import reactor

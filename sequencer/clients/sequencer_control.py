@@ -4,40 +4,38 @@ import numpy as np
 import os
 import sys
 
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
+from PyQt6 import QtCore, QtWidgets
 from twisted.internet.defer import inlineCallbacks
 
 from client_tools.connection import connection
-from client_tools.widgets import SuperSpinBox
-from sequencer.clients.widgets.duration_widgets import DurationRow
-from sequencer.clients.widgets.digital_widgets import DigitalClient
-from sequencer.clients.widgets.analog_widgets import AnalogClient
-from sequencer.clients.widgets.add_dlt_widgets import AddDltRow
-from sequencer.clients.widgets.analog_editor import AnalogVoltageEditor
-from sequencer.clients.widgets.analog_manual_client import AnalogVoltageManualClient
-from sequencer.clients.helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
+from widgets.duration_widgets import DurationRow
+from widgets.digital_widgets import DigitalClient
+from widgets.analog_widgets import AnalogClient
+from widgets.add_dlt_widgets import AddDltRow
+from widgets.analog_editor import AnalogVoltageEditor
+from widgets.analog_manual_client import AnalogVoltageManualClient
+from helpers import get_sequence_parameters
 
 SEP = os.path.sep
 
-class LoadAndSave(QtGui.QWidget):
+class LoadAndSave(QtWidgets.QWidget):
     """ Tool bar for entering filenames, loading and saving """
     def __init__(self):
         super(LoadAndSave, self).__init__()
         self.populate()
 
     def populate(self):
-        self.locationBox = QtGui.QLineEdit()
-        self.loadButton = QtGui.QPushButton('Load')
-        self.saveButton = QtGui.QPushButton('Save')
-        self.layout = QtGui.QHBoxLayout()
+        self.locationBox = QtWidgets.QLineEdit()
+        self.loadButton = QtWidgets.QPushButton('Load')
+        self.saveButton = QtWidgets.QPushButton('Save')
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.setContentsMargins(0, 5, 0, 5)
         self.layout.addWidget(self.locationBox)
         self.layout.addWidget(self.loadButton)
         self.layout.addWidget(self.saveButton)
         self.setLayout(self.layout)
 
-class SequencerClient(QtGui.QWidget):
+class SequencerClient(QtWidgets.QWidget):
     name = None
 
     conductor_servername = None
@@ -58,12 +56,12 @@ class SequencerClient(QtGui.QWidget):
     analog_height = 50
     max_columns = 100
     digital_colors = ["#ff0000", "#ff7700", "#ffff00", "#00ff00", "#0000ff", "#8a2be2"]
-    qt_style = 'Gtk+'
+    qt_style = 'Fusion'
 
     def __init__(self, reactor, cxn=None):
         super(SequencerClient, self).__init__(None)
-        self.sequencer_update_id = np.random.randint(0, 2**32 - 1)
-        self.conductor_update_id = np.random.randint(0, 2**32 - 1)
+        self.sequencer_update_id = np.random.randint(0, 2**31 - 1)
+        self.conductor_update_id = np.random.randint(0, 2**31 - 1)
         self.name = '{} - client'.format(self.sequencer_servername)
         self.reactor = reactor
         self.cxn = cxn
@@ -77,10 +75,10 @@ class SequencerClient(QtGui.QWidget):
                 yield self.cxn.connect(name=self.name)
             yield self.getChannels()
             self.populate()
-            yield self.displaySequence(self.default_sequence)
             yield self.connectSignals()
-            yield self.get_sequence_parameters()
-        except Exception, e:
+            yield self.displaySequence(self.sequence)
+            yield self.get_sequence_parameters(self.sequence)
+        except Exception as e:
             raise e
 
     @inlineCallbacks
@@ -102,7 +100,7 @@ class SequencerClient(QtGui.QWidget):
                     if v['channel_type'] == 'digital'
                 }
 
-        self.default_sequence = dict(
+        self.sequence = dict(
             [(nameloc, [{'type': 'lin', 'vf': 0, 'dt': 1}]) 
                   for nameloc in self.analog_channels]
             + [(nameloc, [{'dt': 1, 'out': 0}]) 
@@ -112,49 +110,48 @@ class SequencerClient(QtGui.QWidget):
         self.loadAndSave = LoadAndSave()
 
         self.addDltRow = AddDltRow(self)
-        self.addDltRow.scrollArea = QtGui.QScrollArea()
+        self.addDltRow.scrollArea = QtWidgets.QScrollArea()
         self.addDltRow.scrollArea.setWidget(self.addDltRow)
         self.addDltRow.scrollArea.setWidgetResizable(True)
-        self.addDltRow.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.addDltRow.scrollArea.setVerticalScrollBarPolicy(1)
-        self.addDltRow.scrollArea.setFrameShape(0)
+        self.addDltRow.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.addDltRow.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.addDltRow.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         self.durationRow = DurationRow(self)
-        self.durationRow.scrollArea = QtGui.QScrollArea()
+        self.durationRow.scrollArea = QtWidgets.QScrollArea()
         self.durationRow.scrollArea.setWidget(self.durationRow)
         self.durationRow.scrollArea.setWidgetResizable(True)
-        self.durationRow.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.durationRow.scrollArea.setVerticalScrollBarPolicy(1)
-        self.durationRow.scrollArea.setFrameShape(0)
+        self.durationRow.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.durationRow.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.durationRow.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         
         self.digitalClient = DigitalClient(self.digital_channels, self)
         self.analogClient = AnalogClient(self.analog_channels, self)
 
-        self.hscrollArray = QtGui.QScrollArea()
-        self.hscrollArray.setWidget(QtGui.QWidget())
-        self.hscrollArray.setHorizontalScrollBarPolicy(2)
-        self.hscrollArray.setVerticalScrollBarPolicy(1)
+        self.hscrollArray = QtWidgets.QScrollArea()
+        self.hscrollArray.setWidget(QtWidgets.QWidget())
+        self.hscrollArray.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.hscrollArray.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.hscrollArray.setWidgetResizable(True)
-        self.hscrollArray.setFrameShape(0)
+        self.hscrollArray.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         
-        self.hscrollName = QtGui.QScrollArea()
-        self.hscrollName.setWidget(QtGui.QWidget())
-        self.hscrollName.setHorizontalScrollBarPolicy(2)
-        self.hscrollName.setVerticalScrollBarPolicy(1)
+        self.hscrollName = QtWidgets.QScrollArea()
+        self.hscrollName.setWidget(QtWidgets.QWidget())
+        self.hscrollName.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.hscrollName.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.hscrollName.setWidgetResizable(True)
-        self.hscrollName.setFrameShape(0)
+        self.hscrollName.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         
-        self.splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         self.splitter.addWidget(self.digitalClient)
         self.splitter.addWidget(self.analogClient)
 
-        #spacer widgets
-        self.northwest = QtGui.QWidget()
-        self.northeast = QtGui.QWidget()
-        self.southwest = QtGui.QWidget()
-        self.southeast = QtGui.QWidget()
+        self.northwest = QtWidgets.QWidget()
+        self.northeast = QtWidgets.QWidget()
+        self.southwest = QtWidgets.QWidget()
+        self.southeast = QtWidgets.QWidget()
 
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.addWidget(self.northwest, 0, 0, 2, 1)
         self.layout.addWidget(self.loadAndSave, 0, 1)
         self.layout.addWidget(self.northeast, 0, 2, 2, 1)
@@ -169,7 +166,6 @@ class SequencerClient(QtGui.QWidget):
         self.layout.setSpacing(0)
 
         self.setWindowTitle(self.name)
-
         self.setLayout(self.layout)
         self.setSizes()
         self.connectWidgets()
@@ -229,7 +225,8 @@ class SequencerClient(QtGui.QWidget):
         self.hscrollArray.widget().setFixedSize(self.digitalClient.array.width(), 0)
         self.hscrollArray.setFixedHeight(20)
         self.hscrollName.widget().setFixedSize(self.namelabel_width, 0)
-        self.hscrollName.setFixedSize(self.namecolumn_width, 20)
+        self.hscrollName.setFixedHeight(20)
+        self.hscrollName.setFixedWidth(self.namecolumn_width)
 
     def connectWidgets(self):
         self.hscrollArray.horizontalScrollBar().valueChanged.connect(self.adjustForHScrollArray)
@@ -237,7 +234,7 @@ class SequencerClient(QtGui.QWidget):
 
         self.loadAndSave.saveButton.clicked.connect(self.saveSequence)
         self.loadAndSave.loadButton.clicked.connect(self.browse)
-#        self.loadAndSave.locationBox.returnPressed.connect(self.loadSequence)
+        self.loadAndSave.locationBox.returnPressed.connect(self.loadSequence)
 
         for i, b in enumerate(self.addDltRow.buttons):
             b.add.clicked.connect(self.addColumn(i))
@@ -275,12 +272,11 @@ class SequencerClient(QtGui.QWidget):
         self.loadAndSave.locationBox.setText(filepath)
 
     def browse(self):
-        pass
         timestr = time.strftime(self.time_format)
         directory = self.sequence_directory.format(timestr)
         if not os.path.exists(directory):
             directory = self.sequence_directory.split('{}')[0]
-        filepath = QtGui.QFileDialog().getOpenFileName(directory=directory)
+        filepath, _ = QtWidgets.QFileDialog().getOpenFileName(directory=directory)
         if filepath:
             self.loadAndSave.locationBox.setText(filepath)
             self.loadSequence(filepath)
@@ -297,20 +293,13 @@ class SequencerClient(QtGui.QWidget):
                     channel_sequence = sequence.pop(matched_key)
                 if not channel_sequence:
                     if channel_key in self.analog_channels:
-                        default_sequence_segment = [
-                            {
-                                'dt': s['dt'], 
-                                'vf': channel_info['manual_output'],
-                                'type': 'lin',
-                                }
+                        channel_sequence = [
+                            {'dt': s['dt'], 'vf': channel_info['manual_output'], 'type': 'lin'}
                             for s in master_sequence
                             ]
                     elif channel_key in self.digital_channels:
-                        default_sequence_segment = [
-                            {
-                                'dt': s['dt'], 
-                                'out': channel_info['manual_output'],
-                                }
+                        channel_sequence = [
+                            {'dt': s['dt'], 'out': channel_info['manual_output']}
                             for s in master_sequence
                             ]
                 sequence.update({channel_key: channel_sequence})
@@ -340,8 +329,8 @@ class SequencerClient(QtGui.QWidget):
     
     @inlineCallbacks
     def displaySequence(self, sequence):
+        yield self.get_sequence_parameters(sequence)
         self.sequence = sequence
-        yield self.get_sequence_parameters()
         self.durationRow.displaySequence(sequence)
         self.digitalClient.displaySequence(sequence)
         self.analogClient.displaySequence(sequence)
@@ -372,7 +361,7 @@ class SequencerClient(QtGui.QWidget):
         def odnc():
             server = yield self.cxn.get_server(self.sequencer_servername)
             board_name = self.digital_channels[channel_name]['board_name']
-            if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
+            if QtWidgets.QApplication.mouseButtons() & QtCore.Qt.MouseButton.RightButton:
                 request = {board_name: {channel_name: None}}
                 response_json = yield server.channel_modes(json.dumps(request))
                 response = json.loads(response_json)
@@ -382,7 +371,7 @@ class SequencerClient(QtGui.QWidget):
                 else:
                     request = {board_name: {channel_name: 'manual'}}
                     yield server.channel_modes(json.dumps(request))
-            elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
+            elif QtWidgets.QApplication.mouseButtons() & QtCore.Qt.MouseButton.LeftButton:
                 request = {board_name: {channel_name: None}}
                 response_json = yield server.channel_manual_outputs(json.dumps(request))
                 response = json.loads(response_json)
@@ -395,7 +384,7 @@ class SequencerClient(QtGui.QWidget):
         channel_info = self.analog_channels[channel_name]
         @inlineCallbacks
         def oanc():
-            if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
+            if QtWidgets.QApplication.mouseButtons() & QtCore.Qt.MouseButton.RightButton:
 
                 class WidgetClass(AnalogVoltageManualClient):
                     name = channel_name
@@ -404,15 +393,15 @@ class SequencerClient(QtGui.QWidget):
                     board_name = channel_info.get('board_name')
                 
                 widget = WidgetClass(self.reactor, self.cxn, self)
-                dialog = QtGui.QDialog()
+                dialog = QtWidgets.QDialog()
                 dialog.ui = widget
-                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+                dialog.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
                 widget.show()
 
-            elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
+            elif QtWidgets.QApplication.mouseButtons() & QtCore.Qt.MouseButton.LeftButton:
                 ave_args = (channel_name, self.getSequence(), self.cxn, self.reactor, self)
                 ave = AnalogVoltageEditor(*ave_args)
-                if ave.exec_():
+                if ave.exec():
                     sequence = ave.getEditedSequence().copy()
                     self.displaySequence(sequence)
                     conductor = yield self.cxn.get_server(self.conductor_servername)
@@ -427,39 +416,25 @@ class SequencerClient(QtGui.QWidget):
         yield sequencer.signal__update(self.sequencer_update_id)
         yield sequencer.addListener(listener=self.receive_sequencer_update, source=None,
                                     ID=self.sequencer_update_id)
+        yield self.cxn.add_on_connect(self.sequencer_servername, self.reinit_sequencer)
+        yield self.cxn.add_on_disconnect(self.sequencer_servername, self.disable)
         conductor = yield self.cxn.get_server(self.conductor_servername)
         yield conductor.signal__update(self.conductor_update_id)
         yield conductor.addListener(listener=self.receive_conductor_update, 
                                     source=None, ID=self.conductor_update_id)
-
-
-    def updateParameters(self):
-        yield None
-        parameter_values = {}
-        self.durationRow.updateParameters(parameter_values)
-        self.digitalClient.updateParameters(parameter_values)
-        self.analogClient.updateParameters(parameter_values)
-        self.addDltRow.updateParameters(parameter_values)
-        self.setSizes()
+        yield self.cxn.add_on_disconnect(self.conductor_servername, self.disable)
+        yield self.cxn.add_on_connect(self.conductor_servername, self.reinit_conductor)
 
     def receive_sequencer_update(self, c, signal_json):
         signal = json.loads(signal_json)
         for message_type, message in signal.items():
             if message_type == 'channel_manual_outputs':
-                channel_infos = {
-                    k: v
-                        for device_name, device_channels in message.items()
-                        for k, v in device_channels.items()
-                    }
+                channel_infos = {k: v for device_name, device_channels in message.items() for k, v in device_channels.items()}
                 for k, v in channel_infos.items():
                     if k in self.digital_channels:
                         self.digitalClient.nameColumn.labels[k].updateManualOutput(v)
             elif message_type == 'channel_modes':
-                channel_infos = {
-                    k: v
-                        for device_name, device_channels in message.items()
-                        for k, v in device_channels.items()
-                    }
+                channel_infos = {k: v for device_name, device_channels in message.items() for k, v in device_channels.items()}
                 for k, v in channel_infos.items():
                     if k in self.digital_channels:
                         self.digitalClient.nameColumn.labels[k].updateMode(v)
@@ -468,43 +443,57 @@ class SequencerClient(QtGui.QWidget):
         signal = json.loads(signal_json)
         for message_type, message in signal.items():
             if message_type in ['set_parameter_values', 'get_parameter_values']:
-                update = {
-                    name.replace('sequencer.', '*'): value
-                        for name, value in message.items()
-                    }
+                update = {name.replace('sequencer.', '*'): value for name, value in message.items()}
                 self.sequence_parameters.update(update)
                 self.analogClient.displaySequence(self.sequence)
     
     @inlineCallbacks
-    def get_sequence_parameters(self):
+    def get_sequence_parameters(self, sequence):
         conductor = yield self.cxn.get_server(self.conductor_servername)
-        parameter_names = get_sequence_parameters(self.sequence)
-        request = {
-            parameter_name.replace('*', 'sequencer.'): None
-                for parameter_name in parameter_names
-            }
+        parameter_names = get_sequence_parameters(sequence)
+        request = {parameter_name.replace('*', 'sequencer.'): None for parameter_name in parameter_names}
         parameter_values_json = yield conductor.get_parameter_values(json.dumps(request))
         parameter_values = json.loads(parameter_values_json)
-        self.sequence_parameters = {
-            name.replace('sequencer.', '*'): value 
-                for name, value in parameter_values.items()
-            }
+        self.sequence_parameters = {name.replace('sequencer.', '*'): value for name, value in parameter_values.items()}
 
     def getSequence(self):
-        durations = [b.value() for b in self.durationRow.boxes 
-                if not b.isHidden()]
-        digital_logic = [c.getLogic() 
-                for c in self.digitalClient.array.columns 
-                if not c.isHidden()]
-        digital_sequence = {key: [{'dt': dt, 'out': dl[key]} 
-                for dt, dl in zip(durations, digital_logic)]
-                for key in self.digital_channels}
-        analog_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
-                for s, dt in zip(self.analogClient.sequence[key], durations)]
-                for key in self.analog_channels}
-        sequence = dict(digital_sequence.items() + analog_sequence.items())
+        durations = [b.value() for b in self.durationRow.boxes if not b.isHidden()]
+        digital_logic = [c.getLogic() for c in self.digitalClient.array.columns if not c.isHidden()]
+        digital_sequence = {key: [{'dt': dt, 'out': dl[key]} for dt, dl in zip(durations, digital_logic)] for key in self.digital_channels}
+        analog_sequence = {key: [{**s, 'dt': dt} for s, dt in zip(self.analogClient.sequence[key], durations)] for key in self.analog_channels}
+        sequence = {**digital_sequence, **analog_sequence}
         return sequence
+        
+    @inlineCallbacks
+    def reinit_sequencer(self, context=None):
+        self.setDisabled(False)
+        server = yield self.cxn.get_server(self.sequencer_servername)
+        yield server.signal__update(self.sequencer_update_id)
+        yield server.addListener(listener=self.receive_sequencer_update, source=None,
+                                 ID=self.sequencer_update_id)
+
+    @inlineCallbacks
+    def reinit_conductor(self, context=None):
+        self.setDisabled(False)
+        server = yield self.cxn.get_server(self.conductor_servername)
+        yield server.signal__update(self.conductor_update_id)
+        yield server.addListener(listener=self.receive_conductor_update, source=None,
+                                 ID=self.conductor_update_id)
+        yield self.get_sequence_parameters(self.sequence)
+        self.analogClient.displaySequence(self.sequence)
+
+    def disable(self):
+        self.setDisabled(True)
     
+    # def updateParameters(self):
+    #     yield None
+    #     parameter_values = {}
+    #     self.durationRow.updateParameters(parameter_values)
+    #     self.digitalClient.updateParameters(parameter_values)
+    #     self.analogClient.updateParameters(parameter_values)
+    #     self.addDltRow.updateParameters(parameter_values)
+    #     self.setSizes()
+        
 #    def undo(self):
 #        pass
 #        #self.updateParameters()
@@ -529,14 +518,48 @@ class SequencerClient(QtGui.QWidget):
 #            if c.key() == QtCore.Qt.Key_B:
 #                self.browse()
 #
-    def closeEvent(self, x):
-        self.reactor.stop()
+    def closeEvent(self, event):
+        if self.cxn is not None:
+            def cleanup_sequencer(server):
+                server.removeListener(
+                    listener=self.receive_sequencer_update, 
+                    ID=self.sequencer_update_id
+                )
+
+            def cleanup_conductor(server):
+                server.removeListener(
+                    listener=self.receive_conductor_update, 
+                    ID=self.conductor_update_id
+                )
+
+            try:
+                d_seq = self.cxn.get_server(self.sequencer_servername)
+                d_seq.addCallback(cleanup_sequencer)
+                d_seq.addErrback(lambda f: print("Sequencer cleanup skipped (already disconnected)."))
+
+                d_cond = self.cxn.get_server(self.conductor_servername)
+                d_cond.addCallback(cleanup_conductor)
+                d_cond.addErrback(lambda f: print("Conductor cleanup skipped (already disconnected)."))
+            except Exception as e:
+                print(f"Error during shutdown cleanup: {e}")
+
+        if self.reactor.running:
+            self.reactor.stop()
+
+        event.accept()
 
 if __name__ == '__main__':
-    a = QtGui.QApplication([])
-    import client_tools.qt4reactor as qt4reactor
-    qt4reactor.install()
+    import asyncio
+    import qasync
+    from twisted.internet import asyncioreactor
+    
+    app = QtWidgets.QApplication(sys.argv)
+    loop = qasync.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+    asyncioreactor.install(loop)
     from twisted.internet import reactor
+    
     widget = SequencerClient(reactor)
     widget.show()
-    reactor.run()
+    with loop:
+        reactor.run()

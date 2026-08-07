@@ -71,7 +71,7 @@ class AndorProxy(object):
     def _log(self, function, error):
         self.error[function] = error
         if self.verbose:
-            print "{}: {}".format(function, ERROR_CODE[error])
+            print ("{}: {}".format(function, ERROR_CODE[error]))
 
     def update_records(self, point_filename, frac, tot):
         """ Send data to andor server"""
@@ -138,7 +138,9 @@ class AndorProxy(object):
         error, arr = self.andor_server.get_acquired_data_16(self.serial_number, 
                                                             size)
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint16)
+        img = np.array(arr, dtype=np.uint16)
+        img_to_send = img.astype(np.int32)
+        return img_to_send
 
     def GetAcquisitionProgress(self):
         """ This function will return information on the progress of the 
@@ -1040,5 +1042,4 @@ class AndorProxy(object):
         error = self.andor_server.wait_for_acquisition_timeout(self.serial_number, iTimeOutMs)
         self._log(sys._getframe().f_code.co_name, error)
         return 
-
 

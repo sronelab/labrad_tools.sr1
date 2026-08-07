@@ -1,19 +1,15 @@
-import json
 import numpy as np
-import sys
 
 import matplotlib
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
-matplotlib.use('Qt4Agg')
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from PyQt6 import QtCore, QtWidgets
+matplotlib.use('qtagg')
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from sequencer.clients.helpers import substitute_sequence_parameters
 from sequencer.devices.yesr_analog_board.ramps import RampMaker
 
-class NameBox(QtGui.QLabel):
+class NameBox(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
     auto_color = '#bababa'
     def __init__(self, nameloc):
@@ -21,7 +17,7 @@ class NameBox(QtGui.QLabel):
         self.nameloc = nameloc
         name, loc = nameloc.split('@')
         self.setText(loc+': '+name)
-        self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter  )
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.name = name
         self.setStyleSheet('QWidget {background-color: %s}' % self.auto_color)
 
@@ -29,7 +25,7 @@ class NameBox(QtGui.QLabel):
         self.clicked.emit()
 
 
-class AnalogNameColumn(QtGui.QWidget):
+class AnalogNameColumn(QtWidgets.QWidget):
     def __init__(self, channels):
         super(AnalogNameColumn, self).__init__(None)
         self.channels = channels
@@ -37,13 +33,13 @@ class AnalogNameColumn(QtGui.QWidget):
 
     def populate(self):
         self.labels = {nl: NameBox(nl) for nl in self.channels}
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(10, 0, 0, 0)
 
         for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
             self.layout.addWidget(self.labels[nl])
-        self.layout.addWidget(QtGui.QWidget())
+        self.layout.addWidget(QtWidgets.QWidget())
         self.setLayout(self.layout)
 
 
@@ -78,8 +74,8 @@ class AnalogArray(FigureCanvas):
             try:
                 T, V = self.rampMaker(channel_sequence).get_plottable(scale='step')
             except:
-                print nl
-                print channel_sequence
+                print(nl)
+                print(channel_sequence)
                 raise
             if max(abs(V)) > 0:
                 V *= 9. / max(abs(V))
@@ -94,7 +90,7 @@ class AnalogArray(FigureCanvas):
         self.draw()
 
 
-class AnalogClient(QtGui.QWidget):
+class AnalogClient(QtWidgets.QWidget):
     def __init__(self, channels, parent):
         super(AnalogClient, self).__init__(None)
         self.channels = channels
@@ -104,28 +100,28 @@ class AnalogClient(QtGui.QWidget):
 
     def populate(self):
         self.nameColumn = AnalogNameColumn(self.channels)
-        self.nameColumn.scrollArea = QtGui.QScrollArea()
+        self.nameColumn.scrollArea = QtWidgets.QScrollArea()
         self.nameColumn.scrollArea.setWidget(self.nameColumn)
         self.nameColumn.scrollArea.setWidgetResizable(True)
-        self.nameColumn.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.nameColumn.scrollArea.setVerticalScrollBarPolicy(1)
-        self.nameColumn.scrollArea.setFrameShape(0)
+        self.nameColumn.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nameColumn.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nameColumn.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
        	
         self.array = AnalogArray(self.channels, self.parent)
-        self.array.scrollArea = QtGui.QScrollArea()
+        self.array.scrollArea = QtWidgets.QScrollArea()
         self.array.scrollArea.setWidget(self.array)
         self.array.scrollArea.setWidgetResizable(True)
-        self.array.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.array.scrollArea.setVerticalScrollBarPolicy(1)
-        self.array.scrollArea.setFrameShape(0)
+        self.array.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.array.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.array.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
-        self.vscroll = QtGui.QScrollArea()
-        self.vscroll.setWidget(QtGui.QWidget())
-        self.vscroll.setHorizontalScrollBarPolicy(1)
-        self.vscroll.setVerticalScrollBarPolicy(2)
-        self.vscroll.setFrameShape(0)
+        self.vscroll = QtWidgets.QScrollArea()
+        self.vscroll.setWidget(QtWidgets.QWidget())
+        self.vscroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.vscroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.vscroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.addWidget(self.nameColumn.scrollArea)
         self.layout.addWidget(self.array.scrollArea)
         self.layout.addWidget(self.vscroll)

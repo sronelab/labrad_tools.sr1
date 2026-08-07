@@ -257,18 +257,16 @@ class PIID(object):
         }
 
     def tick(self, side, value, shot_number):
+        if self.last_update_shot is not None:
+            shot_gap = shot_number - self.last_update_shot
+            if shot_gap > self.max_shot_gap:
+                self._reset_xybuffers()
+        self.last_update_shot = shot_number
         if side == 'right' and not self.input_buffer['left']:
             return self.output
         self.input_buffer[side].append(value)
         if np.product([bool(v) for v in self.input_buffer.values()]):
-            if self.last_update_shot is not None:
-                shot_gap = shot_number - self.last_update_shot
-                if shot_gap > self.max_shot_gap:
-                    self._reset_xybuffers()
-                    print("PIID Soft Reset due to large gap: {} shots.".format(shot_gap))
-
             self.update_output()
-            self.last_update_shot = shot_number
         return self.output
 
     def update_output(self):

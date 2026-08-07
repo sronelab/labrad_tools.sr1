@@ -1,33 +1,30 @@
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
-import numpy as np
-import json
+from PyQt6 import QtCore, QtWidgets
 import matplotlib
-matplotlib.use('Qt4Agg')
+matplotlib.use('qtagg')
 
-class Spacer(QtGui.QFrame):
+class Spacer(QtWidgets.QFrame):
     def __init__(self, parent):
         super(Spacer, self).__init__(None)
         self.setFixedSize(parent.spacer_width, parent.spacer_height)
-        self.setFrameShape(1)
+        self.setFrameShape(QtWidgets.QFrame.Shape.HLine)
         self.setLineWidth(0)
 
 
-class SequencerButton(QtGui.QFrame):
+class SequencerButton(QtWidgets.QFrame):
     def __init__(self):
         super(SequencerButton, self).__init__(None)
-        self.setFrameShape(2)
+        self.setFrameShape(QtWidgets.QFrame.Shape.Panel)
         self.setLineWidth(1)
         self.on_color = '#ff69b4'
         self.off_color = '#ffffff'
     
     def setChecked(self, state):
         if state:
-            self.setFrameShadow(0x0030)
+            self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
             self.setStyleSheet('QWidget {background-color: %s}' % self.on_color)
             self.is_checked = True
         else:
-            self.setFrameShadow(0x0020)
+            self.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
             self.setStyleSheet('QWidget {background-color: %s}' % self.off_color)
             self.is_checked = False
 
@@ -37,7 +34,7 @@ class SequencerButton(QtGui.QFrame):
         else:
             self.setChecked(True)
 
-class DigitalColumn(QtGui.QWidget):
+class DigitalColumn(QtWidgets.QWidget):
     def __init__(self, channels, parent, position):
         super(DigitalColumn, self).__init__(None)
         self.channels = channels
@@ -47,7 +44,7 @@ class DigitalColumn(QtGui.QWidget):
 
     def populate(self):
         self.buttons = {nl: SequencerButton() for nl in self.channels}
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
@@ -55,7 +52,7 @@ class DigitalColumn(QtGui.QWidget):
                 self.layout.addWidget(Spacer(self.parent))
             self.layout.addWidget(self.buttons[nl])
             self.buttons[nl].on_color = self.parent.digital_colors[i%len(self.parent.digital_colors)]
-        self.layout.addWidget(QtGui.QWidget())
+        self.layout.addWidget(QtWidgets.QWidget())
         self.setLayout(self.layout)
 
     def getLogic(self):
@@ -66,7 +63,7 @@ class DigitalColumn(QtGui.QWidget):
             self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
 
 
-class DigitalArray(QtGui.QWidget):
+class DigitalArray(QtWidgets.QWidget):
     def __init__(self, channels, parent):
         super(DigitalArray, self).__init__(None)
         self.channels = channels
@@ -75,7 +72,7 @@ class DigitalArray(QtGui.QWidget):
 
     def populate(self):
         self.columns = [DigitalColumn(self.channels, self.parent, i) for i in range(self.parent.max_columns)]
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         for lc in self.columns:
             self.layout.addWidget(lc)
         self.layout.setSpacing(0)
@@ -95,14 +92,14 @@ class DigitalArray(QtGui.QWidget):
             c.setLogic(sequence)
 
 
-class NameBox(QtGui.QLabel):
+class NameBox(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
     def __init__(self, nameloc, kw):
         super(NameBox, self).__init__(None)
         self.nameloc = nameloc
         name, loc = nameloc.split('@')
         self.setText(loc+': '+name)
-        self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter  )
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.name = name
         self.off_color = '#ffffff'
         self.auto_color = '#bbbbbb'
@@ -141,7 +138,7 @@ class NameBox(QtGui.QLabel):
 #            self.setStyleSheet('QWidget {background-color: %s}' % self.auto_color)
 #
 
-class DigitalNameColumn(QtGui.QWidget):
+class DigitalNameColumn(QtWidgets.QWidget):
     def __init__(self, channels, parent):
         super(DigitalNameColumn, self).__init__(None)
         self.channels = channels
@@ -150,7 +147,7 @@ class DigitalNameColumn(QtGui.QWidget):
 
     def populate(self):
         self.labels = {k: NameBox(k, v) for k, v in self.channels.items()}
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(10, 0, 0, 0)
         for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
@@ -158,10 +155,11 @@ class DigitalNameColumn(QtGui.QWidget):
                 self.layout.addWidget(Spacer(self.parent))
             self.layout.addWidget(self.labels[nl])
             self.labels[nl].on_color = self.parent.digital_colors[i%len(self.parent.digital_colors)]
-        self.layout.addWidget(QtGui.QWidget())
+            self.labels[nl].updateDisplay()
+        self.layout.addWidget(QtWidgets.QWidget())
         self.setLayout(self.layout)
 
-class DigitalClient(QtGui.QWidget):
+class DigitalClient(QtWidgets.QWidget):
     def __init__(self, channels, parent):
         super(DigitalClient, self).__init__(None)
         self.channels = channels
@@ -170,28 +168,28 @@ class DigitalClient(QtGui.QWidget):
 
     def populate(self):
         self.nameColumn = DigitalNameColumn(self.channels, self.parent)
-        self.nameColumn.scrollArea = QtGui.QScrollArea()
+        self.nameColumn.scrollArea = QtWidgets.QScrollArea()
         self.nameColumn.scrollArea.setWidget(self.nameColumn)
         self.nameColumn.scrollArea.setWidgetResizable(True)
-        self.nameColumn.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.nameColumn.scrollArea.setVerticalScrollBarPolicy(1)
-        self.nameColumn.scrollArea.setFrameShape(0)
+        self.nameColumn.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nameColumn.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nameColumn.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         self.array = DigitalArray(self.channels, self.parent)
-        self.array.scrollArea = QtGui.QScrollArea()
+        self.array.scrollArea = QtWidgets.QScrollArea()
         self.array.scrollArea.setWidget(self.array)
         self.array.scrollArea.setWidgetResizable(True)
-        self.array.scrollArea.setHorizontalScrollBarPolicy(1)
-        self.array.scrollArea.setVerticalScrollBarPolicy(1)
-        self.array.scrollArea.setFrameShape(0)
+        self.array.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.array.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.array.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
-        self.vscroll = QtGui.QScrollArea()
-        self.vscroll.setWidget(QtGui.QWidget())
-        self.vscroll.setHorizontalScrollBarPolicy(1)
-        self.vscroll.setVerticalScrollBarPolicy(2)
-        self.vscroll.setFrameShape(0)
+        self.vscroll = QtWidgets.QScrollArea()
+        self.vscroll.setWidget(QtWidgets.QWidget())
+        self.vscroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.vscroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.vscroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.addWidget(self.nameColumn.scrollArea)
         self.layout.addWidget(self.array.scrollArea)
         self.layout.addWidget(self.vscroll)
@@ -203,9 +201,6 @@ class DigitalClient(QtGui.QWidget):
     
     def displaySequence(self, sequence):
         self.array.displaySequence(sequence)
-
-    def updateParameters(self, parameter_values):
-        pass
     
     def connectWidgets(self):
         self.vscrolls = [self.nameColumn.scrollArea.verticalScrollBar(),

@@ -78,6 +78,20 @@ class ProbeDetuningMF(ConductorParameter):
                 self.value=mF_value
                 print(' Top Clock Center Frequency: ' + str(mF_value))
 
+            elif follow_lock  == 3:
+                print('follow ws lock in spin transfer detunings')
+                request = {'clock_servo.control_signals.+9/2a':{},'clock_servo.control_signals.-9/2a':{},
+                            'clock_servo.control_signals.+9/2b':{},'clock_servo.control_signals.-9/2b':{}}
+                temporary_data = self.server._get_parameter_values(request, all=False)
+                f_minus_a = temporary_data['clock_servo.control_signals.-9/2a']
+                f_plus_a = temporary_data['clock_servo.control_signals.+9/2a']
+                f_minus_b = temporary_data['clock_servo.control_signals.-9/2b']
+                f_plus_b = temporary_data['clock_servo.control_signals.+9/2b']
+
+                mF_value = (f_minus_a+f_plus_a+f_minus_b+f_plus_b)/4.0+867.5e6
+                self.value=mF_value
+                print(' Top Clock Center Frequency: ' + str(mF_value))
+
             request = {'probe_detuning_mF': float(mF_value)}
             self.server._set_parameter_values(request)
 

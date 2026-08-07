@@ -14,7 +14,6 @@ class HrDemodFrequency(ConductorParameter):
         self.connect_to_labrad()
         initial_request =  {'ad9956_0': {'start': self.dark_frequency, 'stop': self.dark_frequency+self.dark_offset, 'rate': self.ramp_rate} }
         self.cxn.rf.linear_ramps(json.dumps(initial_request))
-        print 'hr_demod_frequency initialized with rr: {}'.format(self.ramp_rate)
 
     def update(self):
         if self.value is not None:

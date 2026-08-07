@@ -49,6 +49,8 @@ class AD9956(DefaultDevice):
 
 
     ramprate=None
+    ramplow = None
+    ramphigh = None
     frequency_low = None
     frequency_high = None
     extra_freqs=[None, None, None, None, None, None]
@@ -192,7 +194,9 @@ class AD9956(DefaultDevice):
         """
         if rate == None:
             rate = 1
-        self.ramprate=rate
+        self.ramprate = rate
+        self.ramplow = start
+        self.ramphigh = stop
         if stop >= start:
             ftw_start = self.make_ftw(start) #Write start frequency to pcr0
             ftw_stop = self.make_ftw(stop) #Write stop frequency to pcr1
@@ -218,8 +222,11 @@ class AD9956(DefaultDevice):
             raise Exception(message)
 
     def get_linear_ramp(self):
-        # could retunr start stop rate here
-        return None
+        return {
+            'start': self.ramplow,
+            'stop': self.ramphigh,
+            'rate': self.ramprate
+        }
 
     def set_frequency(self, frequency, board=-1, output=None):
         """ select single frequency output mode at specified frequency

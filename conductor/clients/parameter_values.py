@@ -1,16 +1,15 @@
 import json
 import numpy as np
 
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal
+from PyQt6 import QtWidgets
 from twisted.internet.defer import inlineCallbacks
 
 from client_tools.connection import connection
 from client_tools.widgets import NeatSpinBox
 
-class ParameterRow(QtGui.QWidget):
+class ParameterRow(QtWidgets.QWidget):
     def __init__(self, parent):
-        QtGui.QDialog.__init__(self)
+        super().__init__()
         self.boxWidth = parent.boxWidth
         self.boxHeight = parent.boxHeight
         self.boxName = parent.boxName
@@ -22,31 +21,32 @@ class ParameterRow(QtGui.QWidget):
             setattr(self, key, value)
 
     def populateGUI(self):
-        self.nameBox = QtGui.QLineEdit()
+        self.nameBox = QtWidgets.QLineEdit()
         self.nameBox.setFixedSize(self.boxWidth, self.boxHeight)
-        self.nameBox.setText(self.boxName)
+        if self.boxName:
+            self.nameBox.setText(self.boxName)
         self.valueBox = NeatSpinBox()
         self.valueBox.setFixedSize(self.boxWidth, self.boxHeight)
 
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.layout.addWidget(self.nameBox)
         self.layout.addWidget(self.valueBox)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-class ParameterValuesClient(QtGui.QGroupBox):
+class ParameterValuesClient(QtWidgets.QGroupBox):
     hasNewValue = False
     free = True
 
     def __init__(self, reactor, cxn=None):
-        QtGui.QDialog.__init__(self)
+        super().__init__()
         self.reactor = reactor
         self.cxn = cxn
-        self.connect()
+        self.connect_to_labrad()
 
     @inlineCallbacks
-    def connect(self):
+    def connect_to_labrad(self):
         if self.cxn is None:
             self.cxn = connection()
             cname = '{} - client'.format(self.servername)
@@ -55,28 +55,23 @@ class ParameterValuesClient(QtGui.QGroupBox):
         try:
             self.populateGUI()
             yield self.connectSignals()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.setDisabled(True)
 
     def populateGUI(self):
-        # Preloading some of the rows with commonly used parameter values
-        preloadNames = ['Z_zero_top','Z_zero_btm', 'Y_zero', 'X_zero', 'Z_mot', 'Y_mot', 'X_mot', 'X_pol', 'X_bias', 'T_blue', 'T_rabi', 'Int813']
-        names = ['sequencer.'+name for name in preloadNames] # adding 'sequencer.' to each
-        names += ['']*(self.numRows-len(preloadNames)) # padding the list to be the same length as the number of rows displayed
+        names = ['sequencer.Z_zero_top','sequencer.Z_zero_btm', 'sequencer.Y_zero', 'sequencer.X_zero', 'sequencer.Z_mot_top', 'sequencer.Z_mot_btm', 'sequencer.Y_mot', 'sequencer.X_mot', 'sequencer.X_pol', 'sequencer.X_bias', '',
+                        'sequencer.T_blue', 'sequencer.T_rabi', 'sequencer.Int813', 'sequencer.Int813_clock', 'sequencer.IntClock', 'sequencer.IntClock_top_mF', 'sequencer.IntClock_btm_mF', '',
+                        'f_9_7', 'f_7_5', 'f_5_3', 'f_5_3_ss', '',
+                        'sequencer.fm_11_doppler', 'sequencer.fm_11_doppler_p']
+        names += ['']*(self.numRows-len(names)) 
+        
         self.parameterRows = []
         for i in range(self.numRows):
-            if names[i] is not None:
-                self.boxName = names[i]
-                self.parameterRows.append(ParameterRow(self))
-            else:
-                self.boxName = None
-                self.parameterRows.append(ParameterRow(self))
-        # old code for loading all blank boxes
-        #self.parameterRows = [ParameterRow(self)
-        #        for i in range(self.numRows)]
+            self.boxName = names[i] if names[i] else None
+            self.parameterRows.append(ParameterRow(self))
 
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         for pr in self.parameterRows:
             self.layout.addWidget(pr)
         self.layout.setSpacing(1)
@@ -104,7 +99,7 @@ class ParameterValuesClient(QtGui.QGroupBox):
             if message_type in ['get_parameter_values', 'set_parameter_values']:
                 for pr in self.parameterRows:
                     parameterName = str(pr.nameBox.text())
-                    if parameterName in message:
+                    if parameterName and (parameterName in message):
                         pr.valueBox.display(message[parameterName])
 
     def set_parameter_value(self, parameterRow):
@@ -115,7 +110,6 @@ class ParameterValuesClient(QtGui.QGroupBox):
             server = yield self.cxn.get_server(self.servername)
             request = {name: value}
             yield server.set_parameter_values(json.dumps(request))
-            parameterRow.valueBox.display(value)
         return spv
     
     def get_parameter_value(self, parameterRow):
@@ -124,10 +118,7 @@ class ParameterValuesClient(QtGui.QGroupBox):
             name = str(parameterRow.nameBox.text())
             server = yield self.cxn.get_server(self.servername)
             request = {name: None}
-            response_json = yield server.get_parameter_values(json.dumps(request))
-            response = json.loads(response_json)
-            value = response[name]
-            parameterRow.valueBox.display(value)
+            yield server.get_parameter_values(json.dumps(request))
         return gpv
 
     @inlineCallbacks
@@ -135,25 +126,14 @@ class ParameterValuesClient(QtGui.QGroupBox):
         server = yield self.cxn.get_server(self.servername)
         request = {str(pr.nameBox.text()): float(pr.valueBox.value()) for pr in self.parameterRows 
                    if str(pr.nameBox.text())}
-        response_json = yield server.set_parameter_values(json.dumps(request))
-        response = json.loads(response_json)
-        for pr in self.parameterRows:
-            parameterName = str(pr.nameBox.text())
-            if parameterName in response:
-                pr.valueBox.display(response[parameterName])
+        yield server.set_parameter_values(json.dumps(request))
     
     @inlineCallbacks
     def get_parameter_values(self):
         server = yield self.cxn.get_server(self.servername)
         request = {str(pr.nameBox.text()): None for pr in self.parameterRows 
                    if str(pr.nameBox.text())}
-        response_json = yield server.get_parameter_values(json.dumps(request))
-        response = json.loads(response_json)
-        for pr in self.parameterRows:
-            parameterName = str(pr.nameBox.text())
-            if parameterName in response:
-                pr.valueBox.display(response[parameterName])
-
+        yield server.get_parameter_values(json.dumps(request))
 
     @inlineCallbacks	
     def reinit(self): 
@@ -166,5 +146,19 @@ class ParameterValuesClient(QtGui.QGroupBox):
     def disable(self):
         self.setDisabled(True)
 
-    def closeEvent(self, x):
-        self.reactor.stop()
+    def closeEvent(self, event):
+        if self.cxn is not None:
+            def cleanup(server):
+                server.removeListener(listener=self.receive_update, ID=self.update_id)
+
+            try:
+                d_seq = self.cxn.get_server(self.servername)
+                d_seq.addCallback(cleanup)
+                d_seq.addErrback(lambda f: print("Cleanup skipped (already disconnected)."))
+            except Exception as e:
+                print(f"Error during shutdown cleanup: {e}")
+
+        if self.reactor.running:
+            self.reactor.stop()
+
+        event.accept()
