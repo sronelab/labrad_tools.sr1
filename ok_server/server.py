@@ -54,7 +54,7 @@ class OKServer(HardwareInterfaceServer):
             except:
                 del self.interfaces[interface_id]
 
-        return self.interfaces.keys()
+        return list(self.interfaces.keys())
         
     def _open_interface(self, interface_id):
         open = self._get_open_interfaces()

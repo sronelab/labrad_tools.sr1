@@ -47,7 +47,7 @@ class YeSrDigitalBoard(YeSrSequencerBoard):
         return {'dt': dt, 'out': channel.manual_output}
 
     def make_sequence_bytes(self, sequence):
-        print 'making bytes...'
+        print('making bytes...')
         if self.is_master:
             # default trigger to hi
             for s in sequence[self.master_channel]:
@@ -72,9 +72,9 @@ class YeSrDigitalBoard(YeSrSequencerBoard):
 
                 if dt > MAX_TICKS:
                     dt = SET_MAX #trigger off of 0th channel
-		    s.update({'dt': dt})
-		    if c.key == self.master_channel:
-                        print "trigger mask:", bin(dt)[26:]
+                    s.update({'dt': dt})
+                    if c.key == self.master_channel:
+                        print("trigger mask:", bin(dt)[26:])
                         s.update({'out': False})
 
                 total_ticks += dt

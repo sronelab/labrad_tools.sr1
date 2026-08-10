@@ -16,7 +16,7 @@ timeout = 20
 ### END NODE INFO
 """
 
-import imp
+import importlib.util
 import json
 
 # mpl.use("Agg")
@@ -145,7 +145,10 @@ class PlotterServer(ThreadedServer):
         # Load new module
         try:
             module_name = os.path.split(path)[-1].strip(".py")
-            module = imp.load_source(module_name, path)
+            spec = importlib.util.spec_from_file_location(module_name, path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
 
             # Add to cache
             self._module_cache[cache_key] = module

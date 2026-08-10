@@ -80,7 +80,7 @@ class Window(tk.Tk):
             self.textbox.insert(1.0, "Disconnected. \n")
 
         # Parse each string in the input list as a JSON object and extract the key-value pairs
-        pairs = [(json.loads(s).items()[0]) for s in param_vals]
+        pairs = [(list(json.loads(s).items())[0]) for s in param_vals]
         pairs = sorted(pairs, key=lambda x: x[0])
 
         # Create a new Toplevel window to display the key-value pairs

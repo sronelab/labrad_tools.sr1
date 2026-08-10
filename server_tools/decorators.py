@@ -42,8 +42,8 @@ def quickSetting(lr_ID, arg_type, do_set=True, do_get=True):
             try:
                 ans = yield do()
             except:
-                print 'error with {} call {}'.format(device.name, name)
-                print 'reinitializing...'
+                print('error with {} call {}'.format(device.name, name))
+                print('reinitializing...')
 #                yield device_call(device.initialize)
                 yield device.initialize()
                 ans = yield do()

@@ -1,4 +1,5 @@
 import rf.devices.ad9956.device
+from importlib import reload
 reload(rf.devices.ad9956.device)
 from rf.devices.ad9956.device import AD9956
 

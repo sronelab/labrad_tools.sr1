@@ -3,7 +3,7 @@ import traceback
 from twisted.internet import defer, reactor, threads
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from labrad.concurrent import futures
+from labrad.concurrent import future_to_deferred, futures
 from labrad.server import LabradServer
 
 
@@ -34,7 +34,7 @@ class ThreadedServer(LabradServer):
         else:
             result = self.__pool.submit(func, *args, **kw)
         while isinstance(result, futures.Future):
-            result = yield labrad.concurrent.future_to_deferred(result)
+            result = yield future_to_deferred(result)
         returnValue(result)
 
     def _exception_handler(self, func):
@@ -45,4 +45,3 @@ class ThreadedServer(LabradServer):
                 traceback.print_exc()
                 raise
         return wrapped_func
-

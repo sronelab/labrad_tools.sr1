@@ -194,7 +194,7 @@ class RampMaker(object):
         # handle this here
         j=0
         for i, s in enumerate(sequence):
-            if s['type'] is 'sub':
+            if s['type'] == 'sub':
                 seq = sequence.pop(i+j)['seq']
                 for ss in s['seq']:
                     sequence.insert(i+j, ss)
@@ -204,7 +204,7 @@ class RampMaker(object):
         for i in range(len(sequence)-1):
             sequence[i+1]['_vi'] = sequence[i]['vf']
         for i in range(len(sequence)):
-            if not sequence[i].has_key('vi'):
+            if 'vi' not in sequence[i]:
                 sequence[i]['vi'] = sequence[i]['_vi']
     
         for i, s in enumerate(sequence):
@@ -220,7 +220,7 @@ class RampMaker(object):
         if scale=='real':
             return T, V
         elif scale=='step':
-            T = range(len(V))
+            T = list(range(len(V)))
             return T, V
 
     def get_continuous(self):

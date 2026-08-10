@@ -3,6 +3,7 @@ import json
 import types
 import os
 import pkgutil
+from importlib import reload
 
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
@@ -35,8 +36,8 @@ def quickSetting(lr_ID, arg_type, do_set=True, do_get=True):
             try:
                 ans = yield do()
             except:
-                print 'error with {} call {}'.format(device.name, name)
-                print 'reinitializing...'
+                print('error with {} call {}'.format(device.name, name))
+                print('reinitializing...')
 #                yield device_call(device.initialize)
                 yield device.initialize()
                 ans = yield do()
@@ -57,8 +58,8 @@ def import_device(device_name):
         device.name = device_name
         return device
     except Exception as e:
-        print e
-        print 'invalid device in ./devices/{}'.format(device_name)
+        print(e)
+        print('invalid device in ./devices/{}'.format(device_name))
 
 class Device(object):
     autostart = False
@@ -110,8 +111,8 @@ class DeviceServer(LabradServer):
             yield device.initialize()
             self.devices[device_name] = device
         except Exception as e:
-            print e
-            print 'unable to initialize device {}'.format(device_name)
+            print(e)
+            print('unable to initialize device {}'.format(device_name))
 
     @inlineCallbacks 
     def terminate_device(self, device_name):
@@ -122,8 +123,8 @@ class DeviceServer(LabradServer):
             device = self.devices.pop(device_name)
             yield device.terminate()
         except Exception as e:
-            print e
-            print 'unable to cleanly terminate device {}'.format(device.name)
+            print(e)
+            print('unable to cleanly terminate device {}'.format(device.name))
         finally:
             del device
 
@@ -148,7 +149,7 @@ class DeviceServer(LabradServer):
             where active_devices is list of names of running devices
             and configured_devices is list of names of devices configured in './devices'
         """
-        active_device_names = self.devices.keys()
+        active_device_names = list(self.devices.keys())
         configured_devices = self.get_configured_devices()
         configured_device_names = [device.name for device in configured_devices]
         response = {
@@ -159,10 +160,10 @@ class DeviceServer(LabradServer):
 
     @setting(1, device_name='s', returns=['s', ''])
     def select_device(self, c, device_name):
-        if device_name not in self.devices.keys():
+        if device_name not in self.devices:
             yield self.initialize_device(device_name)
 
-        if device_name in self.devices.keys():
+        if device_name in self.devices:
             c['device_name'] = device_name
             device = self.get_selected_device(c)
             device_info = {x: getattr(device, x) for x in dir(device) if x[0] != '_'}

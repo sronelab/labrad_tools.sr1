@@ -6,7 +6,7 @@ import traceback
 
 from conductor.parameter import ConductorParameter
 # import vxi11
-import urllib2 # for python 2 compatibility
+from urllib import request # for python 2 compatibility
 
 class SiDemod(ConductorParameter):
     priority = 6
@@ -21,7 +21,7 @@ class SiDemod(ConductorParameter):
     def update(self):
 
         try:
-            _freq = float(urllib2.urlopen(self.url, timeout=self.timeout).read().strip())
+            _freq = float(request.urlopen(self.url, timeout=self.timeout).read().strip())
             self.current_freq = _freq
         except:
             _freq = self.current_freq

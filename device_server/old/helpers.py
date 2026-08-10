@@ -1,6 +1,7 @@
 import importlib
+from importlib import reload
 
-from exceptions import DeviceImportError
+from .exceptions import DeviceImportError
 
 
 def import_device_class(device_name):

@@ -146,7 +146,7 @@ class RecordPath(ConductorParameter):
                 sequence_value = previous_sequence.value
             else:
                 sequence_value = sequence.value
-            intersection = np.intersect1d(sequence_value, self.record_types.keys())
+            intersection = np.intersect1d(sequence_value, list(self.record_types.keys()))
 
             if intersection != None:
                 record_type = self.record_types.get(intersection[-1])
@@ -251,7 +251,7 @@ class RecordPath(ConductorParameter):
         if not os.path.isdir(data_directory):
             os.makedirs(data_directory)
 
-        imlen = np.int32(len(temp_image_three)/3)
+        imlen = np.int32(len(temp_image_three)//3)
         temp_image_g = temp_image_three[0:imlen]
         temp_image_e = temp_image_three[imlen:2*imlen]
         temp_image_bg = temp_image_three[2*imlen:3*imlen]
@@ -425,7 +425,7 @@ class RecordPath(ConductorParameter):
 
             andor.StartAcquisition()
 
-            print "Image size:", (hend - hstart + 1) // hbin, (vend - vstart + 1) // vbin
+            print("Image size:", (hend - hstart + 1) // hbin, (vend - vstart + 1) // vbin)
 
             # xpix, ypix = andor.GetDetector()
             # print "Andor detector dimensions: %d x %d" % (xpix, ypix)
@@ -437,17 +437,17 @@ class RecordPath(ConductorParameter):
             for _ in range(max_wait):
                 status = andor.GetStatus()
                 if status == 'DRV_IDLE':
-                    print "Acquired Data"
+                    print("Acquired Data")
                     break
                 time.sleep(1)
             else:
-                print "Timed out waiting for acquisition"
+                print("Timed out waiting for acquisition")
                 andor.AbortAcquisition()
                 return
-            imlen = int(3*((hend-hstart+1)/hbin)*((vend-vstart+1)/vbin))
+            imlen = int(3*((hend-hstart+1)//hbin)*((vend-vstart+1)//vbin))
             data = andor.GetAcquiredData(imlen)
             # print("[TEST] acquired data")
-            data = data.reshape(3, int((vend-vstart+1)/vbin), int((hend-hstart+1)/hbin))
+            data = data.reshape(3, int((vend-vstart+1)//vbin), int((hend-hstart+1)//hbin))
             images = {key: data[i]
                       for i, key in enumerate(["g", "e", "bg"])}
 
@@ -576,7 +576,7 @@ class RecordPath(ConductorParameter):
         temp_image_three_num = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
         time_start_write = time.time()
         # Process data
-        imlen = np.int32(len(temp_image_three_num)/self.num_kinetic_shots)
+        imlen = np.int32(len(temp_image_three_num)//self.num_kinetic_shots)
         temp_image_g_num = temp_image_three_num[0:imlen]
         temp_image_e_num = temp_image_three_num[imlen:2*imlen]
         temp_image_bg_num = temp_image_three_num[2*imlen:3*imlen]
@@ -588,7 +588,7 @@ class RecordPath(ConductorParameter):
         temp_image_three_final = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
 
         # Process data
-        imlen = np.int32(len(temp_image_three_final)/self.num_kinetic_shots)
+        imlen = np.int32(len(temp_image_three_final)//self.num_kinetic_shots)
         temp_image_g_final = temp_image_three_final[0:imlen]
         temp_image_e_final = temp_image_three_final[imlen:2*imlen]
         temp_image_bg_final = temp_image_three_final[2*imlen:3*imlen]

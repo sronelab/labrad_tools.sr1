@@ -10,9 +10,9 @@ class PS3000aProxy(object):
     def __init__(self, server, serial_number):
         self.server = server
         self.serial_number = serial_number
-        print 1
+        print(1)
         self.server.open_interface(self.serial_number)
-        print 2
+        print(2)
 
     def enumerateUnits(self):
         return self.server.get_available_interfaces()
@@ -34,7 +34,7 @@ class PS3000aProxy(object):
 
     def setChannel(self, channel='A', coupling='AC', VRange=2.0, VOffset=0.0, 
                    enabled=True, BWLimited=0, probeAttenuation=1.0):
-        print channel, coupling, VRange, VOffset, enabled, BWLimited, probeAttenuation
+        print(channel, coupling, VRange, VOffset, enabled, BWLimited, probeAttenuation)
         self.server.set_channel(self.serial_number, channel, coupling, VRange, 
                                 VOffset, enabled, BWLimited, probeAttenuation)
     

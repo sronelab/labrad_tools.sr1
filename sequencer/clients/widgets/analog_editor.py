@@ -68,7 +68,7 @@ class RampColumn(QtWidgets.QGroupBox):
         self.add = QtWidgets.QPushButton('+')
         self.dlt = QtWidgets.QPushButton('-')
         self.ramp_select = QtWidgets.QComboBox()
-        self.ramp_select.addItems(self.ramp_maker.available_ramps.keys())
+        self.ramp_select.addItems(list(self.ramp_maker.available_ramps.keys()))
         self.parameter_widgets = {k: ParameterWidget(k, ramp) for 
                 k, ramp in self.ramp_maker.available_ramps.items()}
         self.stack = QtWidgets.QStackedWidget()

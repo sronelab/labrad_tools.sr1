@@ -27,6 +27,7 @@ from twisted.internet.reactor import callLater
 from picoscope import ps3000a
 
 from hardware_interface_server.server import HardwareInterfaceServer
+from hardware_interface_server.exceptions import InterfaceNotAvailable
 
 class PicoscopeServer(HardwareInterfaceServer):
     """Provides access to picoscopes """
@@ -39,7 +40,7 @@ class PicoscopeServer(HardwareInterfaceServer):
         return available_interfaces
     
     def _get_open_interfaces(self):
-        return self.interfaces.keys()
+        return list(self.interfaces.keys())
 
     def _open_interface(self, serial_number):
         open_interfaces = self._get_open_interfaces()

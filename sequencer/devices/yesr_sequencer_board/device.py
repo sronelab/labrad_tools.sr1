@@ -5,6 +5,7 @@ import os
 import time
 
 from device_server.device import DefaultDevice
+from sequencer.exceptions import ChannelNotFound
 from sequencer.devices.yesr_sequencer_board.helpers import time_to_ticks
 from sequencer.devices.yesr_sequencer_board.helpers import combine_sequences
 from ok_server.proxy import OKProxy
@@ -72,7 +73,7 @@ class YeSrSequencerBoard(DefaultDevice):
             if os.path.exists(sequencepath):
                 break
         if not os.path.exists(sequencepath):
-            raise SequenceNotFoundError(sequence_name)
+            raise FileNotFoundError(sequencepath)
 
         with open(sequencepath, 'r') as infile:
             sequence = json.load(infile)
@@ -211,7 +212,7 @@ class YeSrSequencerBoard(DefaultDevice):
         return self.raw_sequence
 
     def get_sequence_parameter_names(self, x):
-        if type(x).__name__ in ['str', 'unicode'] and x[0] == '*':
+        if type(x).__name__ == 'str' and x[0] == '*':
             return [x]
         elif type(x).__name__ == 'list':
             return set(list(chain.from_iterable([
@@ -243,7 +244,7 @@ class YeSrSequencerBoard(DefaultDevice):
         return sequence_parameter_values
 
     def substitute_sequence_parameters(self, x, parameter_values):
-        if type(x).__name__ in ['str', 'unicode']:
+        if type(x).__name__ == 'str':
             if x[0] == '*':
                 return parameter_values[x]
             else:

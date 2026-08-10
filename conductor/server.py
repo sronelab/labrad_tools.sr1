@@ -18,6 +18,7 @@ timeout = 20
 from collections import deque
 import glob
 import importlib
+from importlib import reload
 import json
 import os
 import sys
@@ -98,9 +99,6 @@ class ConductorServer(ThreadedServer):
     """
     name = 'conductor'
     update = Signal(648324, 'signal: update', 's')
-    parameters = {}
-    experiment = {}
-    experiment_queue = deque([])
     parameter_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, 'parameters/')
     experiment_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, '.experiments/')
 
@@ -108,6 +106,9 @@ class ConductorServer(ThreadedServer):
     verbose = True
 
     def initServer(self):
+        self.parameters = {}
+        self.experiment = {}
+        self.experiment_queue = deque()
         self._initialize_parameters(request={}, all=True, suppress_errors=True)
 #        self.connect_to_labrad()
 
@@ -604,7 +605,7 @@ class ConductorServer(ThreadedServer):
             value = parameter._get_value()
             _tf = time.time()
             if (_tf - _ti > 0.001) and self.verbose:
-                print name, _tf - _ti
+                print(name, _tf - _ti)
             # test if we will be able to flatten to json
 #            value_json = json.dumps({name: value})
         except:
@@ -684,7 +685,7 @@ class ConductorServer(ThreadedServer):
         Returns:
             None
         """
-        active_parameters = self._get_active_parameters().keys()
+        active_parameters = list(self._get_active_parameters().keys())
         ti = time.time()
         for parameter_name in active_parameters:
             try:
@@ -692,13 +693,13 @@ class ConductorServer(ThreadedServer):
                 self._advance_parameter_value(parameter_name)
                 _tf = time.time()
                 if (_tf - _ti > 0.01) and self.verbose:
-                    print parameter_name, _tf - _ti
+                    print(parameter_name, _tf - _ti)
             except:
                 traceback.print_exc()
                 if not suppress_errors:
                     raise
         if self.verbose:
-            print "advanced parameter values in {} s".format(time.time() - ti)
+            print("advanced parameter values in {} s".format(time.time() - ti))
 
     def _advance_parameter_value(self, name):
         """ advance values in specified parameter's value_queue
@@ -745,7 +746,7 @@ class ConductorServer(ThreadedServer):
                 if not suppress_errors:
                     raise
         if self.verbose:
-            print 'updated parameters in {} s'.format(time.time() - ti)
+            print('updated parameters in {} s'.format(time.time() - ti))
 
     def _update_parameter(self, name):
         """ call a specified parameter's update method
@@ -779,7 +780,7 @@ class ConductorServer(ThreadedServer):
         tf = time.time()
 
         if self.verbose or parameter.verbose:
-            print 'parameter ({}) updated in {} s'.format(parameter.name, tf - ti)
+            print('parameter ({}) updated in {} s'.format(parameter.name, tf - ti))
 
     @setting(7, experiment_json='s', run_next='b')
     def queue_experiment(self, c, experiment_json='{}', run_next=False):
@@ -831,7 +832,7 @@ class ConductorServer(ThreadedServer):
         self._clear_experiment_queue()
 
     def _clear_experiment_queue(self):
-        self.experiment_queue = deque([])
+        self.experiment_queue = deque()
 
     @setting(9)
     def stop_experiment(self, c):
@@ -857,10 +858,10 @@ class ConductorServer(ThreadedServer):
                 self.experiment = experiment
                 self._fix_experiment_name()
 
-                print experiment['parameters']
+                print(experiment['parameters'])
                 self._reload_parameters(experiment['parameters'])
                 self._set_parameter_values(experiment['parameter_values'])
-                print "experiment ({}): loaded from queue".format(experiment['name'])
+                print("experiment ({}): loaded from queue".format(experiment['name']))
                 self._log_experiment_number()
             except:
                 raise ExperimentAdvanceError()
@@ -883,7 +884,7 @@ class ConductorServer(ThreadedServer):
  #           isbusy = self._check_sequencer()
 
         if self.is_advancing:
-            raise AlreadyAdvancing()
+            raise AlreadyAdvancingError()
         try:
             # start timer
             ti = time.time()
@@ -1015,7 +1016,7 @@ class ConductorServer(ThreadedServer):
         name = self.experiment.get('name')
         log_directory = os.path.join(self.experiment_directory, time_string)
         glob_pathname = os.path.join(log_directory, name + '#*')
-        previous_experiments = [x for x in glob.glob(glob_pathname)]
+        previous_experiments = glob.glob(glob_pathname)
         previous_experiment_numbers = [int(pathname.split('#')[-1]) for pathname in previous_experiments]
         if previous_experiment_numbers:
             experiment_number = max(previous_experiment_numbers) + 1

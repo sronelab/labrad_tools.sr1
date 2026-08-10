@@ -51,7 +51,7 @@ class RFServer(DeviceServer):
 
     def _state(self, name, state):
         device = self._get_device(name)
-        if state:
+        if state is not None:
             device.set_state(state)
         response = device.get_state()
         return response
@@ -82,7 +82,7 @@ class RFServer(DeviceServer):
 
     def _frequency(self, name, frequency):
         device = self._get_device(name)
-        if frequency:
+        if frequency is not None:
             device.set_frequency(frequency)
         response = device.get_frequency()
         return response
@@ -113,7 +113,7 @@ class RFServer(DeviceServer):
 
     def _amplitude(self, name, amplitude):
         device = self._get_device(name)
-        if amplitude:
+        if amplitude is not None:
             device.set_amplitude(amplitude)
         response = device.get_amplitude()
         return response
@@ -144,7 +144,7 @@ class RFServer(DeviceServer):
 
     def _ramprate(self, name, ramprate):
         device = self._get_device(name)
-        if ramprate:
+        if ramprate is not None:
             device.set_ramprate(ramprate)
         response = device.get_ramprate()
         return response
@@ -175,7 +175,7 @@ class RFServer(DeviceServer):
 
     def _offset(self, name, offset):
         device = self._get_device(name)
-        if offset:
+        if offset is not None:
             device.set_offset(offset)
         response = device.get_offset()
         return response

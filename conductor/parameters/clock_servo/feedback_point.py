@@ -1,5 +1,5 @@
 from conductor.parameter import ConductorParameter
-from control_loops import PID, PIID
+from .control_loops import PID, PIID
 import json
 import os
 

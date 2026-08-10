@@ -36,7 +36,7 @@ class MakoCamera(QObject):
         self.is_fitting = True 
         
         self.fit_method = fit_method
-        self.fit_params = {"x":674, "y":441, "sigma_x": 183, "sigma_x": 110, "theta":0, "offset":0, "roi_size":500} #just for 2d
+        self.fit_params = {"x":674, "y":441, "sigma_x": 183, "sigma_y": 110, "theta":0, "offset":0, "roi_size":500} #just for 2d
 
         self.labrad_trigger_signal.connect(self.execute_labrad_trigger)
         self.last_valid_data = ([0.0, 0.0], [0.0, 0.0])

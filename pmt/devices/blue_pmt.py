@@ -119,21 +119,21 @@ class BluePMT(Picoscope):
     
         abs_data_path = os.path.join(self.data_path, rel_data_path)         
         if self.verbose:
-            print "saving processed data to {}".format(abs_data_path)
+            print("saving processed data to {}".format(abs_data_path))
 
         json_path = abs_data_path + '.json'
         with open(json_path, 'w') as outfile:
             json.dump(processed_data, outfile, default=lambda x: x.tolist())
         
         #h5py_path = abs_data_path + '.hdf5'
-	h5py_path = self.raw_data_path + '.hdf5' #Overwrite file every time to save HD space
+        h5py_path = self.raw_data_path + '.hdf5' #Overwrite file every time to save HD space
         h5f = h5py.File(h5py_path, 'w')
         for k, v in raw_data.items():
             h5f.create_dataset(k, data=np.array(v), compression='gzip')
         h5f.close()
         
         """ temporairly store data """
-        if len(self.record_names) > self.max_records:
+        if len(self.record_names) >= self.max_records:
             oldest_name = self.record_names.popleft()
             if oldest_name not in self.record_names:
                 _ = self.records.pop(oldest_name)

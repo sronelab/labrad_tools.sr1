@@ -5,18 +5,17 @@ from hardware_interface_server.exceptions import InterfaceNotAvailable
 
 class HardwareInterfaceServer(ThreadedServer):
     """ template for hardware interface server """
-    interfaces = {}
 
     def initServer(self):
+        self.interfaces = {}
         available_interfaces = self._get_available_interfaces()
-        print "available interfaces on {}:".format(self.name)
+        print("available interfaces on {}:".format(self.name))
         for interface_id in available_interfaces:
-            print "\t{}".format(interface_id)
+            print("\t{}".format(interface_id))
 
     def stopServer(self):
-        close_config = {interface_id: {} for interface_id 
-                in self.interfaces}
-        self._close_interface(close_config)
+        for interface_id in list(self.interfaces):
+            self._close_interface(interface_id)
 
     def _get_interface(self, interface_id):
         open_interfaces = self._get_open_interfaces()

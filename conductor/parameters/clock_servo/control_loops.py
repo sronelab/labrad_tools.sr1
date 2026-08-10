@@ -49,7 +49,7 @@ class DitherIII(object):
 
     def tick(self, side, value, shot_number):
         self.input_buffer[side].append(value)
-        if np.product([bool(v) for v in self.input_buffer.values()]):
+        if all(bool(v) for v in self.input_buffer.values()):
             if self.last_update_shot is not None:
                 shot_gap = shot_number - self.last_update_shot
                 if shot_gap > self.max_shot_gap:
@@ -150,7 +150,7 @@ class PID(object):
 
     def tick(self, side, value, shot_number):
         self.input_buffer[side].append(value)
-        if np.product([bool(v) for v in self.input_buffer.values()]):
+        if all(bool(v) for v in self.input_buffer.values()):
             if self.last_update_shot is not None:
                 shot_gap = shot_number - self.last_update_shot
                 if shot_gap > self.max_shot_gap:
@@ -166,7 +166,7 @@ class PID(object):
         in_r = self.input_buffer['right'].pop()
 
         self.error = in_l - in_r - self.input_offset
-        print 'error', self.error
+        print('error', self.error)
 
         b_0 = self.filter_coefficients['b_0']
         b_1 = self.filter_coefficients['b_1']
@@ -265,7 +265,7 @@ class PIID(object):
         if side == 'right' and not self.input_buffer['left']:
             return self.output
         self.input_buffer[side].append(value)
-        if np.product([bool(v) for v in self.input_buffer.values()]):
+        if all(bool(v) for v in self.input_buffer.values()):
             self.update_output()
         return self.output
 

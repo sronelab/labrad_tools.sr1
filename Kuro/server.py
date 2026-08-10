@@ -38,10 +38,10 @@ class KuroServer(LabradServer):
     }
     # for the clock servo. stroing recent 100 data with its filenames.
     name = '%LABRADNODE%_kuro'
-    records = deque([])
     max_records = 100
 
     def initServer(self):
+        self.records = deque(maxlen=self.max_records)
         self.kuro = KuroCamera(camera_id=self.camera_id,param=self.ini_param)
         self.kuro.__enter__()
         atexit.register(self._safe_shutdown)
@@ -167,8 +167,6 @@ class KuroServer(LabradServer):
     def update_records(self, c, data):
         """ Update records."""
         data = json.loads(data)
-        if len(self.records) > self.max_records:
-            self.records.popleft()
         self.records.append(data)
 
     @setting(25)

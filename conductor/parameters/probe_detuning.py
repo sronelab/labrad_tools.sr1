@@ -22,8 +22,8 @@ class ProbeDetuning(ConductorParameter):
             SL_FNC_comb = 95.520e6 + 2.*SL_FNC_table_AOM # this is the equation for the current distribution center (2021-04-15)
             f_fnc = 2.0*(-1.0*float(self.value)  + SL_FNC_comb/2.0 - mjm_comb_demod)
             f_steer = f_fnc/2.0 - f_vco
-            print "f_fnc: %f"%f_fnc
-            print "f_steer: %f"%f_steer
+            print("f_fnc: %f"%f_fnc)
+            print("f_steer: %f"%f_steer)
 
             request = {
                     'clock_aom.hr_frequency': float(f_steer),

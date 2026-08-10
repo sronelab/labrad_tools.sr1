@@ -1,4 +1,3 @@
-from symbol import atom
 from conductor.parameter import ConductorParameter
 import os
 import numpy as np

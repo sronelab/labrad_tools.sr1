@@ -1,4 +1,5 @@
 import sequencer.devices.yesr_analog_board.device
+from importlib import reload
 reload(sequencer.devices.yesr_analog_board.device)
 import sequencer.devices.yesr_analog_board.channel
 reload(sequencer.devices.yesr_analog_board.channel)

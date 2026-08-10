@@ -81,7 +81,7 @@ class SequencerClient(QtGui.QWidget):
             yield self.connectSignals()
             yield self.getChannels()
 #            yield self.get_sequence_parameters()
-        except Exception, e:
+        except Exception as e:
             raise e
 
     @inlineCallbacks
@@ -516,10 +516,10 @@ class SequencerClient(QtGui.QWidget):
         digital_sequence = {key: [{'dt': dt, 'out': dl[key]} 
                 for dt, dl in zip(durations, digital_logic)]
                 for key in self.digital_channels}
-        analog_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
+        analog_sequence = {key: [dict(list(s.items()) + [('dt', dt)])
                 for s, dt in zip(self.analogClient.sequence[key], durations)]
                 for key in self.analog_channels}
-        sequence = dict(digital_sequence.items() + analog_sequence.items())
+        sequence = dict(list(digital_sequence.items()) + list(analog_sequence.items()))
         return sequence
     
 #    def undo(self):

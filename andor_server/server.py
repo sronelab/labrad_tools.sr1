@@ -26,10 +26,10 @@ class AndorServer(LabradServer):
     name = '%LABRADNODE%_andor'
 
     # for the clock servo. stroing recent 100 data with its filenames.
-    records = deque([])
     max_records = 100
 
     def initServer(self):
+        self.records = deque(maxlen=self.max_records)
         global andor
         andor = Andor()
         andor.Initialize()
@@ -499,8 +499,6 @@ class AndorServer(LabradServer):
     def update_records(self, c, data):
         """ Update records."""
         data = json.loads(data)
-        if len(self.records) > self.max_records:
-            self.records.popleft()
         self.records.append(data)
 
     @setting(73)

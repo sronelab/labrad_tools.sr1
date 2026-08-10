@@ -1,4 +1,5 @@
 import json
+import struct
 
 from device_server.device import DefaultDevice
 
@@ -84,4 +85,3 @@ def ticks_to_bytes(ticks):
 
 def bits_to_bytes(bits):
     return struct.unpack('BB', struct.pack('h', bits))
-

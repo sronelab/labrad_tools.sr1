@@ -46,7 +46,6 @@ class ConductorParameter(object):
     priority = None
     value_type = 'single'
     value = None
-    value_queue = deque([])
 #    next_value = None
     previous_value = None
 
@@ -57,6 +56,7 @@ class ConductorParameter(object):
             setattr(self, k, v)
         
     def _initialize(self, config={}):
+        self.value_queue = deque()
         try:
             return self.initialize(config)
         except:
@@ -87,9 +87,9 @@ class ConductorParameter(object):
         """ set value, and value_queue if we want to scan parameter value """
         if self.value_type == 'single':
             if hasattr(value, '__iter__'):
-                self.value_queue = deque([v for v in value])
+                self.value_queue = deque(value)
             else:
-                self.value_queue = deque([])
+                self.value_queue = deque()
                 self.value = value
 
         elif self.value_type == 'list':
@@ -103,19 +103,19 @@ class ConductorParameter(object):
 #                raise Exception(message)
             elif len(value) > 1:
                 if hasattr(value[0], '__iter__'):
-                    self.value_queue = deque([v for v in value])
+                    self.value_queue = deque(value)
                 else:
-                    self.value_queue = deque([])
+                    self.value_queue = deque()
                     self.value = value
             else:
-                self.value_queue = deque([])
+                self.value_queue = deque()
                 self.value_queue = deque([value])
         
         elif self.value_type == 'dict':
             if type(value).__name__ == 'list':
-                self.value_queue = deque([v for v in value])
+                self.value_queue = deque(value)
             else:
-                self.value_queue = deque([])
+                self.value_queue = deque()
                 self.value = value
 
         elif self.value_type == 'once':

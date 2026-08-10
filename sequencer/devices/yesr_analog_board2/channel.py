@@ -50,7 +50,7 @@ class YeSrAnalogChannel(object):
     
     def set_manual_output(self, manual_output):
         if not (self.min_voltage <= manual_output <= self.max_voltage):
-            message = 'channel output {} not in range [{}, {}]'.format(mode, 
+            message = 'channel output {} not in range [{}, {}]'.format(manual_output,
                 self.min_voltage, self.max_voltage)
             raise Exception(message)
         self.manual_output = manual_output

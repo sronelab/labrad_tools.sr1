@@ -8,11 +8,11 @@ from labrad.server import LabradServer
 from labrad.server import setting
 from labrad.wrappers import connectAsync
 
-from exceptions import DeviceAlreadyInitializedError
-from exceptions import DeviceImportError
-from exceptions import DeviceInitializationError
-from exceptions import DeviceTerminationError
-from helpers import import_device_class
+from .exceptions import DeviceAlreadyInitializedError
+from .exceptions import DeviceImportError
+from .exceptions import DeviceInitializationError
+from .exceptions import DeviceTerminationError
+from .helpers import import_device_class
 
 class GenericDevice(object):
     autostart = False
@@ -117,8 +117,8 @@ class DeviceServer(LabradServer):
             where active_devices is list of names of running devices
             and configured_devices is list of names of devices configured in './devices'
         """
-        active_device_names = self.devices.keys()
-        configured_device_names = self._get_configured_devices().keys()
+        active_device_names = list(self.devices.keys())
+        configured_device_names = list(self._get_configured_devices().keys())
         response = {
             'active': active_device_names,
             'configured': configured_device_names,
@@ -127,7 +127,7 @@ class DeviceServer(LabradServer):
 
     @setting(1, device_name='s', returns=['s', ''])
     def select_device(self, c, device_name):
-        if device_name not in self.devices.keys():
+        if device_name not in self.devices:
             yield self._initialize_device(device_name)
 
         c['device_name'] = device_name

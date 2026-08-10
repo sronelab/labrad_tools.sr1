@@ -16,7 +16,7 @@ class Picoscope(DefaultDevice):
     n_samples = None
 
     records = {}
-    record_names = deque([])
+    record_names = deque()
     max_records = 100
     
     
@@ -32,9 +32,9 @@ class Picoscope(DefaultDevice):
         response = ps.setSamplingInterval(self.picoscope_sampling_interval, 
                                           self.picoscope_duration)
         self.n_samples = response[1]
-        print 'sampling interval:', response[0]
-        print 'number of samples:', response[1]
-        print 'max samples:', response[2]
+        print('sampling interval:', response[0])
+        print('number of samples:', response[1])
+        print('max samples:', response[2])
         ps.setSimpleTrigger('External', self.picoscope_trigger_threshold,
                             timeout_ms=self.picoscope_timeout)
         ps.memorySegments(self.picoscope_n_capture)

@@ -32,7 +32,7 @@ class PMTViewer(QtGui.QDialog):
         super(PMTViewer, self).__init__(None)
         self.reactor = reactor
         self.cxn = cxn
-        print self.data_dir
+        print(self.data_dir)
 
         self.update_id = np.random.randint(0, 2**31 - 1)
         self.loading = False
@@ -77,7 +77,7 @@ class PMTViewer(QtGui.QDialog):
     def receive_update(self, c, signal_json):
         signal = json.loads(signal_json)
         for message_type, message in signal.items():
-            print message_type, message
+            print(message_type, message)
             device_message = message.get(self.pmt_name)
             if (message_type == 'record') and (device_message is not None):
                 rdp = getattr(self, 'raw_data_path')
