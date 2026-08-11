@@ -36,9 +36,9 @@ scope2_config = {
 
     "ip": "192.168.1.115",
 
-    "trig_channel": 1,
-    "trig_level": -0.9,
-    'time_offset': -.19,
+    "trig_channel": 4,
+    "trig_level": .4,
+    'time_offset': 0.0,
 
     "timebase": 0.02,
 
@@ -47,7 +47,7 @@ scope2_config = {
 
     "channels": {
 
-        1: {"scale": 0.5, "offset": 1.},
+        1: {"scale": 1.0, "offset": -2.2},
         2: {"scale": 0.5, "offset": 1.2},
         3: {"scale": 0.2, "offset": -.575},
         4: {"scale": 0.1, "offset": -.25}
