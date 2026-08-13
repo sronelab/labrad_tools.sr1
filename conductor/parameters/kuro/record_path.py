@@ -20,7 +20,7 @@ class RecordPath(ConductorParameter):
     priority = 2
     call_in_thread = True
 
-    data_filename = '{}.kuro.hdf5'
+    data_filename = '{}.kuro.json'
     nondata_filename = '{}/kuro.hdf5'
     data_directory = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
     _update_proxy = None
@@ -134,27 +134,23 @@ class RecordPath(ConductorParameter):
             return 0, 0
     
     def SaveData_1d(self, images, save_path, time_acquire):
-        image_1d = {key: np.sum(value,axis=0) for key, value in images.items()}
-        
-        with h5py.File(save_path, "w") as h5f:
-            for key, value in image_1d.items():
-                h5f.create_dataset(key, data=value, compression='lzf')
-            # for key, value in self.ini_param.items():
-            #     h5f.create_dataset(key, data=value)
+        # image_1d = {key: np.sum(value,axis=0) for key, value in images.items()}
+        # with h5py.File(save_path, "w") as h5f:
+        #     for key, value in image_1d.items():
+        #         h5f.create_dataset(key, data=value, compression='lzf')
+        #     h5f.create_dataset("time",data=time_acquire)
+        image_1d = {key: np.sum(value,axis=0).tolist() for key, value in images.items()}
+        image_1d["time"] = time_acquire
+        with open(save_path, "w") as file:
+            json.dump(image_1d, file)
 
-            h5f.create_dataset("time",data=time_acquire)
-            # h5f.create_dataset("save_time",data=time.time())
         print("Saved data to {}".format(save_path))
 
     def SaveData_2d(self, images, save_path, time_acquire):
         with h5py.File(save_path, "w") as h5f:
             for key, value in images.items():
                 h5f.create_dataset(key, data=value, compression='lzf')
-            # for key, value in self.ini_param.items():
-            #     h5f.create_dataset(key, data=value)
-
             h5f.create_dataset("time",data=time_acquire)
-            # h5f.create_dataset("time_save",data=time.time())
         print("Saved data to {}".format(save_path))
 
     def Fit_Position(self, image):

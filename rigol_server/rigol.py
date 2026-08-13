@@ -107,7 +107,9 @@ class RigolOscilloscope:
         return times, data
     
     def acquire_and_process(self):
+        print("Acquiring data from Rigol scope...")
         try:
+            print("Validating scope status...")
             status = self.scope.query(":TRIG:STAT?").strip()
             if status != "STOP":
                 self.scope.write(":STOP")
@@ -154,7 +156,7 @@ class RigolOscilloscope:
                 'ch4_rms': 0
             }
 
-        # print(results)
+        print(results)
         return results
 
     def close(self):
