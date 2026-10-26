@@ -2,8 +2,8 @@ import json
 import numpy as np
 import sys
 
-from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
 
 from client_tools.connection import connection
@@ -12,12 +12,12 @@ from client_tools.widgets import SuperSpinBox
 ACTION_WIDTH = 120
 ACTION_HEIGHT = 50
 
-class ButtonActionWidget(QtGui.QPushButton):
+class ButtonActionWidget(QtWidgets.QPushButton):
     name = None
     servername = None
 
     def __init__(self, reactor, cxn=None):
-        QtGui.QDialog.__init__(self)
+        QtWidgets.QDialog.__init__(self)
         self.reactor = reactor
         self.cxn = cxn 
         self.initialize()
@@ -238,10 +238,10 @@ class StopExperiment(ButtonActionWidget):
 #    def closeEvent(self, x):
 #        self.reactor.stop()
 
-class MultipleActionsContainer(QtGui.QWidget):
+class MultipleActionsContainer(QtWidgets.QWidget):
     name = None
     def __init__(self, client_list, reactor, cxn=None):
-        QtGui.QDialog.__init__(self)
+        QtWidgets.QDialog.__init__(self)
         self.client_list = client_list
         self.reactor = reactor
         self.initialize()
@@ -250,7 +250,7 @@ class MultipleActionsContainer(QtGui.QWidget):
         self.populateGUI()
 
     def populateGUI(self):
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         for client in self.client_list:
             self.layout.addWidget(client)
         self.setFixedSize(ACTION_WIDTH + 20 , (ACTION_HEIGHT + 12) * len(self.client_list) )
@@ -262,10 +262,13 @@ class MultipleActionsContainer(QtGui.QWidget):
 
 
 if __name__ == '__main__':
-    from PyQt4 import QtGui
-    app = QtGui.QApplication([])
-    from client_tools import qt4reactor
-    qt4reactor.install()
+    import asyncio
+    import qasync
+    from twisted.internet import asyncioreactor
+    app = QtWidgets.QApplication([])
+    loop = qasync.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+    asyncioreactor.install(loop)
     from twisted.internet import reactor
     widgets = [
         RunBlueMOT(reactor),
@@ -273,4 +276,5 @@ if __name__ == '__main__':
         ]
     widget = MultipleActionsContainer(widgets, reactor)
     widget.show()
-    reactor.run()
+    with loop:
+        reactor.run()

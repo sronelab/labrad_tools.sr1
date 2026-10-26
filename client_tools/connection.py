@@ -53,7 +53,7 @@ class connection(object):
         
     @inlineCallbacks
     def _confirm_connected(self, server_name):
-        if not server_name in self._servers:
+        if self._servers.get(server_name) is None:
             try:
                 self._servers[server_name] = yield self.cxn[server_name]
             except Exception as e:
@@ -75,7 +75,7 @@ class connection(object):
         if server_name in self._servers:
             print('{} Connected'.format(server_name))
             self._servers[server_name] = yield self.cxn[server_name]
-            actions = self._on_connect[server_name]
+            actions = self._on_connect.get(server_name, [])
             for action in actions:
                 yield action()
     
@@ -85,7 +85,7 @@ class connection(object):
         if server_name in self._servers:
             print('{} Disconnected'.format(server_name))
             self._servers[server_name] = None
-            actions = self._on_disconnect[server_name]
+            actions = self._on_disconnect.get(server_name, [])
             for action in actions:
                 yield action()
     

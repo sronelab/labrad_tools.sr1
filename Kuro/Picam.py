@@ -1726,7 +1726,7 @@ class Picam:
         
         cameras = []
         for i in range(count.value):
-            cameras.append(id_array_ptr[i])
+            cameras.append(_copy_struct(id_array_ptr[i]))
         
         self._dll.Picam_DestroyCameraIDs(id_array_ptr)
         return cameras
@@ -1746,7 +1746,7 @@ class Picam:
         
         cameras = []
         for i in range(count.value):
-            cameras.append(id_array_ptr[i])
+            cameras.append(_copy_struct(id_array_ptr[i]))
         
         self._dll.Picam_DestroyCameraIDs(id_array_ptr)
         return cameras
@@ -1795,7 +1795,6 @@ class Picam:
     def CloseCamera(self, camera: PicamHandle):
         """Close camera"""
         error = self._dll.Picam_CloseCamera(camera)
-        self._dll.Picam_DestroyHandles(ctypes.pointer(camera))
         if error != PicamError.None_:
             print(PicamException(error))
     
@@ -1814,7 +1813,7 @@ class Picam:
         
         cameras = []
         for i in range(count.value):
-            cameras.append(camera_array_ptr[i])
+            cameras.append(PicamHandle(camera_array_ptr[i]))
         
         self._dll.Picam_DestroyHandles(camera_array_ptr)
         return cameras
@@ -1904,6 +1903,7 @@ class Picam:
         error = self._dll.Picam_SetParameterFloatingPointValue(camera, parameter.value, value)
         if error != PicamError.None_:
             print(PicamException(error))
+        return error == PicamError.None_
     
     def CanSetParameterFloatingPointValue(self, camera: PicamHandle, parameter: PicamParameter, value: float) -> bool:
         """Check if floating point parameter value can be set"""
@@ -1920,16 +1920,16 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = rois_ptr.contents
+        result = _copy_struct(rois_ptr.contents)
         self._dll.Picam_DestroyRois(rois_ptr)
         return result
     
     def SetParameterRoisValue(self, camera: PicamHandle, parameter: PicamParameter, rois: PicamRois):
         """Set ROIs parameter value"""
         error = self._dll.Picam_SetParameterRoisValue(camera, parameter.value, ctypes.byref(rois))
-        self._dll.Picam_DestroyRois(rois)
         if error != PicamError.None_:
             print(PicamException(error))
+        return error == PicamError.None_
     
     def CanSetParameterRoisValue(self, camera: PicamHandle, parameter: PicamParameter, rois: PicamRois) -> bool:
         """Check if ROIs parameter value can be set"""
@@ -1947,7 +1947,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = pulse_ptr.contents
+        result = _copy_struct(pulse_ptr.contents)
         self._dll.Picam_DestroyPulses(pulse_ptr)
         return result
     
@@ -1972,7 +1972,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = modulations_ptr.contents
+        result = _copy_struct(modulations_ptr.contents)
         self._dll.Picam_DestroyModulations(modulations_ptr)
         return result
     
@@ -2022,7 +2022,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = rois_ptr.contents
+        result = _copy_struct(rois_ptr.contents)
         self._dll.Picam_DestroyRois(rois_ptr)
         return result
     
@@ -2033,7 +2033,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = pulse_ptr.contents
+        result = _copy_struct(pulse_ptr.contents)
         self._dll.Picam_DestroyPulses(pulse_ptr)
         return result
     
@@ -2044,7 +2044,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = modulations_ptr.contents
+        result = _copy_struct(modulations_ptr.contents)
         self._dll.Picam_DestroyModulations(modulations_ptr)
         return result
     
@@ -2122,7 +2122,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = purview_ptr.contents
+        result = _copy_struct(purview_ptr.contents)
         self._dll.Picam_DestroyStatusPurviews(purview_ptr)
         return result
     
@@ -2213,7 +2213,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = constraint_ptr.contents
+        result = _copy_struct(constraint_ptr.contents)
         self._dll.Picam_DestroyCollectionConstraints(constraint_ptr)
         return result
     
@@ -2224,7 +2224,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = constraint_ptr.contents
+        result = _copy_struct(constraint_ptr.contents)
         self._dll.Picam_DestroyRangeConstraints(constraint_ptr)
         return result
     
@@ -2235,7 +2235,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = constraint_ptr.contents
+        result = _copy_struct(constraint_ptr.contents)
         self._dll.Picam_DestroyRoisConstraints(constraint_ptr)
         return result
     
@@ -2246,7 +2246,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = constraint_ptr.contents
+        result = _copy_struct(constraint_ptr.contents)
         self._dll.Picam_DestroyPulseConstraints(constraint_ptr)
         return result
     
@@ -2257,7 +2257,7 @@ class Picam:
         if error != PicamError.None_:
             print(PicamException(error))
         
-        result = constraint_ptr.contents
+        result = _copy_struct(constraint_ptr.contents)
         self._dll.Picam_DestroyModulationsConstraints(constraint_ptr)
         return result
     
@@ -2340,6 +2340,17 @@ class PicamException(Exception):
             self.error_code = error_code.value
             self.error_name = error_code.name
         super().__init__(f"Picam Error {self.error_code}: {self.error_name}")
+
+def _copy_struct(src):
+    """Deep-copy an SDK-owned structure (and its *_array/*_count arrays) before it is destroyed"""
+    dst = type(src).from_buffer_copy(src)
+    for name, ftype in src._fields_:
+        if name.endswith('_array'):
+            count = getattr(src, name[:-len('_array')] + '_count')
+            setattr(dst, name, (ftype._type_ * count)(*getattr(src, name)[:count]))
+        elif issubclass(ftype, Structure):
+            setattr(dst, name, _copy_struct(getattr(src, name)))
+    return dst
 
 # Convenience Functions
 def create_roi(x: int, y: int, width: int, height: int, x_binning: int = 1, y_binning: int = 1) -> PicamRoi:

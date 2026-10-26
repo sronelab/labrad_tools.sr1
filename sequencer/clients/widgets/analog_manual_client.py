@@ -169,10 +169,9 @@ class AnalogVoltageManualClient(QtWidgets.QDialog):
     def reinit(self): 
         self.setDisabled(False)
         server = yield self.cxn.get_server(self.sequencer_servername)
-        yield server.signal__update(self.sequencer_update_id, context=self.context)
+        yield server.signal__update(self.sequencer_update_id)
         yield server.addListener(listener=self.receive_sequencer_update, source=None,
-                                 ID=self.sequencer_update_id, context=self.context)
-        yield server.send_update()
+                                 ID=self.sequencer_update_id)
 
 
     def disable(self):
@@ -180,17 +179,25 @@ class AnalogVoltageManualClient(QtWidgets.QDialog):
     
     def closeEvent(self, event):
         def do_cleanup(sequencer):
-            sequencer.signal__update(self.sequencer_update_id)
+            d = sequencer.signal__update()
             sequencer.removeListener(
                 listener=self.receive_sequencer_update, 
                 source=None, 
                 ID=self.sequencer_update_id
             )
+            return d
+
+        def do_disconnect(_):
+            # this window owns its connection; cxn.cxn only exists once connect() succeeded
+            labrad_cxn = getattr(self.cxn, 'cxn', None)
+            if labrad_cxn is not None:
+                labrad_cxn.disconnect()
 
         if self.cxn is not None:
             d = self.cxn.get_server(self.sequencer_servername)
             d.addCallback(do_cleanup)
             d.addErrback(lambda f: print(f"Cleanup error: {f.getErrorMessage()}"))
+            d.addBoth(do_disconnect)
         
         if self.parent is None:
             self.reactor.stop()

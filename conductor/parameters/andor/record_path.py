@@ -116,16 +116,19 @@ class RecordPath(ConductorParameter):
         previous_sequence = self.server.parameters.get('sequencer.previous_sequence')
 
         value = None
+        rel_point_path = None
         if (experiment_name is not None) and (sequence is not None):
             point_filename = self.data_filename.format(shot_number)
             rel_point_path = os.path.join(experiment_name, point_filename)
         elif sequence is not None:
             rel_point_path = self.nondata_filename.format(time.strftime('%Y%m%d'))
 
+        if sequence is None:
+            return value
         if sequence.loop:
-            if np.intersect1d(previous_sequence.value, self.record_sequences):
+            if np.intersect1d(previous_sequence.value, self.record_sequences).size > 0:
                 value = rel_point_path
-        elif np.intersect1d(sequence.value, self.record_sequences):
+        elif np.intersect1d(sequence.value, self.record_sequences).size > 0:
             value = rel_point_path
 
         return value
@@ -148,20 +151,22 @@ class RecordPath(ConductorParameter):
                 sequence_value = sequence.value
             intersection = np.intersect1d(sequence_value, list(self.record_types.keys()))
 
-            if intersection != None:
+            if intersection.size > 0:
                 record_type = self.record_types.get(intersection[-1])
 
             # print("Camera record_type: {}".format(record_type))
 
             if record_type == 'fluorescence':
                 self.num_kinetic_shots = 3
-                frac, tot = self.take_fluorescence_image()
+                result = self.take_fluorescence_image()
 
-                # send data to the proxy instance.
-                shotnumber = self.server.experiment.get('shot_number')
-                experiment_name = self.server.experiment.get('name')
-                point_filename = "{}_{}".format(experiment_name, shotnumber)
-                self._andor.update_records(point_filename, frac, tot)
+                # send data to the proxy instance (skipped if the acquisition failed).
+                if result is not None:
+                    frac, tot = result
+                    shotnumber = self.server.experiment.get('shot_number')
+                    experiment_name = self.server.experiment.get('name')
+                    point_filename = "{}_{}".format(experiment_name, shotnumber)
+                    self._andor.update_records(point_filename, frac, tot)
 
             elif record_type == 'fluorescence2D':
                 self.num_kinetic_shots = 3
@@ -198,6 +203,16 @@ class RecordPath(ConductorParameter):
                     self._update_proxy.emit(update_data)
                 except Exception as e:
                     print("Failed to send update server notification: {}".format(e))
+
+    def _acquisition_failed(self, andor):
+        """True (and prints why) if the last wait or data readout did not return DRV_SUCCESS."""
+        wait_error = andor.error.get('WaitForAcquisitionTimeOut')
+        data_error = andor.error.get('GetAcquiredData')
+        if wait_error != 20002 or data_error != 20002:
+            print("Andor acquisition failed (WaitForAcquisitionTimeOut: {}, GetAcquiredData: {}); "
+                  "shot not saved and not sent to the servo.".format(wait_error, data_error))
+            return True
+        return False
 
     def take_fluorescence_image(self):
         """
@@ -244,6 +259,8 @@ class RecordPath(ConductorParameter):
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         time_acquire = time.time()
         temp_image_three = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
+        if self._acquisition_failed(andor):
+            return None
         time_start_write = time.time()
 
         # Write data
@@ -285,9 +302,9 @@ class RecordPath(ConductorParameter):
         print('Tcam: ' + str(T_cam)+ ' EMGain: ' + str(emccd_gain) +  "PreAmpGain: "+str(preamp_gain))
 
         # process data for the clock servo
-        ee = np.sum(temp_image_e[50:300])
-        gg = np.sum(temp_image_g[50:300])
-        bg = np.sum(temp_image_bg[50:300])
+        ee = np.sum(temp_image_e[50:300], dtype=float) # data is uint32; avoid wrap-around
+        gg = np.sum(temp_image_g[50:300], dtype=float)
+        bg = np.sum(temp_image_bg[50:300], dtype=float)
         tot = ee + gg - 2*bg
         frac = (ee - bg) / tot
 
@@ -314,7 +331,7 @@ class RecordPath(ConductorParameter):
             except Exception as e:
                 print("Failed to send real-time update: {}".format(e))
 
-        return frac, tot
+        return float(frac), float(tot)
 
     def take_fluorescence_image_2D_oneshot(self):
             """Take a single full ROI 2D image for vacuum lifetime measurement"""
@@ -574,6 +591,8 @@ class RecordPath(ConductorParameter):
         timeout_ms = 3*60000
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three_num = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
+        if self._acquisition_failed(andor):
+            return
         time_start_write = time.time()
         # Process data
         imlen = np.int32(len(temp_image_three_num)//self.num_kinetic_shots)
@@ -586,6 +605,8 @@ class RecordPath(ConductorParameter):
         andor.StartAcquisition()
         andor.WaitForAcquisitionTimeOut(timeout_ms)
         temp_image_three_final = andor.GetAcquiredData(self.num_kinetic_shots*andor.GetDetector()[0])
+        if self._acquisition_failed(andor):
+            return
 
         # Process data
         imlen = np.int32(len(temp_image_three_final)//self.num_kinetic_shots)

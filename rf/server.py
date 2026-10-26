@@ -239,7 +239,11 @@ class RFServer(DeviceServer):
         device = self._get_device(name)
         if frequency:
             device.set_frequency(**frequency)
-        response = device.get_frequency()
+        output = frequency.get('output') if frequency else None
+        if output is None:
+            response = device.get_frequency()
+        else:
+            response = device.get_frequency(output)
         return response
     
 Server = RFServer

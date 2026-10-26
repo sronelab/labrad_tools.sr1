@@ -154,7 +154,7 @@ class SimpleAndorPlotter:
                 'total': (tot/10/sites_per_pixel).tolist(),
                 'fit': (self.gauss(xpix, *pfit)/10/sites_per_pixel).tolist(),
                 'fraction': frac.tolist(),
-                'fraction_smoothed': np.convolve(frac, np.ones(11)/11)[5:-5].tolist(),
+                'fraction_smoothed': np.convolve(frac, np.ones(11)/11, mode='valid').tolist(),
                 'x_fraction': x[5:-5],  # Adjusted for smoothing
                 'fit_params': {
                     'center': float((pfit[2])*6*1e-3),

@@ -212,7 +212,7 @@ class YeSrSequencerBoard(DefaultDevice):
         return self.raw_sequence
 
     def get_sequence_parameter_names(self, x):
-        if type(x).__name__ == 'str' and x[0] == '*':
+        if type(x).__name__ == 'str' and x.startswith('*'):
             return [x]
         elif type(x).__name__ == 'list':
             return set(list(chain.from_iterable([
@@ -245,7 +245,7 @@ class YeSrSequencerBoard(DefaultDevice):
 
     def substitute_sequence_parameters(self, x, parameter_values):
         if type(x).__name__ == 'str':
-            if x[0] == '*':
+            if x.startswith('*'):
                 return parameter_values[x]
             else:
                 return x
@@ -270,7 +270,7 @@ class YeSrSequencerBoard(DefaultDevice):
             self.update_mode()
 
     def get_loading(self):
-        return self.running
+        return self.loading
 
     def set_running(self, running):
         if running is not None:

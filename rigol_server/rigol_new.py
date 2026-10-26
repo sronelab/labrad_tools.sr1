@@ -1,6 +1,7 @@
 import pyvisa
 import numpy as np
 import time
+import threading
 from datetime import datetime
 import json
 
@@ -18,9 +19,12 @@ def mean_rms(times, volts, start=0, stop=0.5):
 
 class RigolOscilloscope:
 
+    trigger_timeout = 30 # [s] max wait for trigger + capture after :SINGle
+
     def __init__(self, config):
 
         self.config = config
+        self.lock = threading.Lock()
 
         self.ip = config["ip"]
         self.trig_channel = config["trig_channel"]
@@ -72,12 +76,19 @@ class RigolOscilloscope:
         self.scope.write("*CLS")
 
         self.scope.write(":SINGle")
+        deadline = time.time() + self.trigger_timeout
 
+        # STOP only counts as done after the scope has left STOP (WAIT/RUN/TD), else it's the old waveform
+        armed = False
         time.sleep(0.1)
         while True:
             status = self.scope.query(":TRIG:STAT?").strip()
-            if status == "STOP":
+            if status != "STOP":
+                armed = True
+            elif armed:
                 break
+            if time.time() > deadline:
+                raise Exception(f"timed out after {self.trigger_timeout} s waiting for trigger (status {status})")
             time.sleep(0.1)
 
     def acquire_waveform(self, channel):
@@ -109,6 +120,11 @@ class RigolOscilloscope:
         return times, data
 
     def acquire_and_process(self):
+
+        with self.lock:
+            return self._acquire_and_process()
+
+    def _acquire_and_process(self):
 
         try:
             status = self.scope.query(":TRIG:STAT?").strip()

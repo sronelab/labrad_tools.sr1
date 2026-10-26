@@ -22,6 +22,7 @@ from importlib import reload
 import json
 import os
 import sys
+import threading
 import time
 import traceback
 import labrad
@@ -103,6 +104,7 @@ class ConductorServer(ThreadedServer):
     experiment_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, '.experiments/')
 
     is_advancing = False
+    _advance_lock = threading.Lock()
     verbose = False
 
     def initServer(self):
@@ -113,8 +115,10 @@ class ConductorServer(ThreadedServer):
 #        self.connect_to_labrad()
 
     def stopServer(self):
-        self._save_parameter_values()
-        self._terminate_parameters(request={}, all=True, suppress_errors=True)
+        try:
+            self._save_parameter_values()
+        finally:
+            self._terminate_parameters(request={}, all=True, suppress_errors=True)
 
     @setting(0)
     def get_configured_parameters(self, c):
@@ -220,7 +224,8 @@ class ConductorServer(ThreadedServer):
             (dict) {<(str) parameter_name>: <parameter>}
         """
         try:
-            return self.parameters
+            # snapshot: callers iterate it while other threads add/remove parameters
+            return dict(self.parameters)
         except:
             if not suppress_errors:
                 raise
@@ -883,7 +888,9 @@ class ConductorServer(ThreadedServer):
  #           print("Waiting for the sequencer")
  #           isbusy = self._check_sequencer()
 
-        if self.is_advancing:
+        # suppress_errors is the trigger-driven path: wait for the running advance
+        # instead of raising, or the trigger waiter dies and the loop stalls
+        if not self._advance_lock.acquire(blocking=suppress_errors):
             raise AlreadyAdvancingError()
         try:
             # start timer
@@ -931,13 +938,16 @@ class ConductorServer(ThreadedServer):
                 raise
         finally:
             self.is_advancing = False
+            self._advance_lock.release()
 
     def _get_parameter(self, name, initialize=False, generic=False):
         active_parameters = self._get_active_parameters()
         if name not in active_parameters:
             if initialize:
-                configured_parameters = self._get_configured_parameters()
-                if name not in configured_parameters:
+                # check for the module file instead of _get_configured_parameters(),
+                # which reload()s every parameter module
+                module_path = os.path.join(self.parameter_directory, *name.split('.')) + '.py'
+                if not os.path.isfile(module_path):
                     self._initialize_parameter(name, {'generic': generic})
                 else:
                     self._initialize_parameter(name, {})
@@ -1001,15 +1011,13 @@ class ConductorServer(ThreadedServer):
         save_values.update(old_values)
         save_values.update(new_values)
 
-        values_filename = os.path.join('.values', 'current.json')
-        values_path = os.path.join(self.parameter_directory, values_filename)
-        with open(values_path, 'w') as outfile:
-            json.dump(save_values, outfile)
-
-        values_filename = os.path.join('.values', '{}.json'.format(time.strftime('%Y%m%d')))
-        values_path = os.path.join(self.parameter_directory, values_filename)
-        with open(values_path, 'w') as outfile:
-            json.dump(save_values, outfile)
+        # serialize first so a bad value can't leave a truncated current.json behind
+        save_json = json.dumps(save_values, default=lambda x: None)
+        for values_filename in ['current.json', '{}.json'.format(time.strftime('%Y%m%d'))]:
+            values_path = os.path.join(self.parameter_directory, '.values', values_filename)
+            with open(values_path + '.tmp', 'w') as outfile:
+                outfile.write(save_json)
+            os.replace(values_path + '.tmp', values_path)
 
     def _fix_experiment_name(self):
         time_string = time.strftime('%Y%m%d')

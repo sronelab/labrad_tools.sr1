@@ -103,7 +103,7 @@ class UpdateServer(LabradServer):
         total_listeners = sum(len(listeners) for listeners in self.updates.values())
         return "Channels: {}, Total listeners: {}".format(total_channels, total_listeners)
 
-    def clientDisconnected(self, c):
+    def expireContext(self, c):
         """Clean up when a client disconnects"""
         client_id = c.ID
 

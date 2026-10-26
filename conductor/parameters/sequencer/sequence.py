@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 
 import labrad
@@ -8,6 +9,10 @@ from twisted.internet.reactor import callFromThread
 
 from conductor.parameter import ConductorParameter
 from ok_server.proxy import OKProxy
+
+# conductor reload()s this module on every (re)initialize; reload keeps the module
+# globals, so the existing lock is reused and still guards waiters from older instances
+_waiter_lock = globals().get('_waiter_lock') or threading.Lock()
 
 class Sequence(ConductorParameter):
     autostart = True
@@ -106,7 +111,14 @@ class Sequence(ConductorParameter):
             time.sleep(0.1)
 
     def _advance_on_trigger(self):
-        self._wait_for_trigger()
+        # one waiter at a time, across reloads: concurrent pollers clear each other's trigger latch
+        if not _waiter_lock.acquire(blocking=False):
+            return
+        try:
+            self._wait_for_trigger()
+        finally:
+            # released before advance(), whose update() starts the next waiter
+            _waiter_lock.release()
 #        self.fp._wait_trigger(0x60)
         self._mark_timestamp()
         #self.server._advance()
