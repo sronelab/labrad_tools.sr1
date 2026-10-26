@@ -37,16 +37,16 @@ class OKServer(HardwareInterfaceServer):
         open = self._get_open_interfaces()
         available_but_not_open = []
         
-        fp = ok.okCFrontPanel()
-        device_count = fp.GetDeviceCount()
+        devices = ok.FrontPanelDevices()
+        device_count = devices.GetCount()
         for i in range(device_count):
-            serial_number = fp.GetDeviceListSerial(i)
+            serial_number = devices.GetSerial(i)
             available_but_not_open.append(serial_number)
         
         return open + available_but_not_open
 
     def _get_open_interfaces(self):
-        for interface_id, interface in self.interfaces.items():
+        for interface_id, interface in list(self.interfaces.items()):
             try: 
                 is_open = interface.IsOpen()
                 if not is_open:
@@ -61,9 +61,8 @@ class OKServer(HardwareInterfaceServer):
         if interface_id in open:
             raise InterfaceAlreadyOpen(interface_id)
 
-        fp = ok.FrontPanel()
-        error = fp.OpenBySerial(interface_id)
-        if error:
+        fp = ok.FrontPanelDevices().Open(interface_id)
+        if not fp:
             raise InterfaceNotAvailable(interface_id)
         fp.LoadDefaultPLLConfiguration()
         self.interfaces[interface_id] = fp
@@ -72,6 +71,10 @@ class OKServer(HardwareInterfaceServer):
         interface = self._get_interface(interface_id)
         interface.Close()
         del self.interfaces[interface_id]
+
+    def _get_data_port(self, interface_id):
+        # fetched per call: the port is owned by the device, which reopen_interface replaces
+        return self._get_interface(interface_id).GetFPGADataPortClassic()
 
     @setting(10)
     def configure_fpga(self, c, interface_id, file_name):
@@ -83,49 +86,49 @@ class OKServer(HardwareInterfaceServer):
     
     @setting(11)
     def get_wire_out_value(self, c, interface_id, wire_address):
-        interface = self._get_interface(interface_id)
-        wire_out_value = interface.GetWireOutValue(wire_address)
+        data_port = self._get_data_port(interface_id)
+        wire_out_value = data_port.GetWireOutValue(wire_address)
         return wire_out_value
     
     @setting(12)
     def is_triggered(self, c, interface_id, address, mask=0xffffffff):
-        interface = self._get_interface(interface_id)
-        is_triggered = interface.IsTriggered(address, mask)
+        data_port = self._get_data_port(interface_id)
+        is_triggered = data_port.IsTriggered(address, mask)
         return bool(is_triggered)
     
     @setting(13)
     def set_wire_in_value(self, c, interface_id, wire_address, value):
-        interface = self._get_interface(interface_id)
-        interface.SetWireInValue(wire_address, value)
+        data_port = self._get_data_port(interface_id)
+        data_port.SetWireInValue(wire_address, value)
     
     @setting(14)
     def update_trigger_outs(self, c, interface_id):
-        interface = self._get_interface(interface_id)
-        interface.UpdateTriggerOuts()
+        data_port = self._get_data_port(interface_id)
+        data_port.UpdateTriggerOuts()
     
     @setting(15)
     def update_wire_ins(self, c, interface_id):
-        interface = self._get_interface(interface_id)
-        interface.UpdateWireIns()
+        data_port = self._get_data_port(interface_id)
+        data_port.UpdateWireIns()
     
     @setting(16)
     def update_wire_outs(self, c, interface_id):
-        interface = self._get_interface(interface_id)
-        interface.UpdateWireOuts()
+        data_port = self._get_data_port(interface_id)
+        data_port.UpdateWireOuts()
     
     @setting(17, interface_id='s', pipe_address='i', byte_array='*y')
     def write_to_pipe_in(self, c, interface_id, pipe_address, byte_array):
-        interface = self._get_interface(interface_id)
-        interface.WriteToPipeIn(pipe_address, bytearray(byte_array))
+        data_port = self._get_data_port(interface_id)
+        data_port.WriteToPipeIn(pipe_address, bytearray(byte_array))
 
     @setting(101)
     def wait_trigger(self, c, interface_id, address, mask=0xffffffff):
-        interface = self._get_interface(interface_id)
-        interface.UpdateTriggerOuts()
-        is_triggered = interface.IsTriggered(address, mask)
+        data_port = self._get_data_port(interface_id)
+        data_port.UpdateTriggerOuts()
+        is_triggered = data_port.IsTriggered(address, mask)
         while True:
-            interface.UpdateTriggerOuts()
-            is_triggered = interface.IsTriggered(address, mask)
+            data_port.UpdateTriggerOuts()
+            is_triggered = data_port.IsTriggered(address, mask)
             if is_triggered:
                 return
             time.sleep(0.005)
