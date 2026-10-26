@@ -101,10 +101,8 @@ class DitherIII(object):
         if self.output is not None:
             self.output_offset = self.output
 
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
+        self.xbuffer.extend([0.] * self.xbuffer.maxlen)
+        self.ybuffer.extend([0.] * self.ybuffer.maxlen)
 
 class PID(object):
     def __init__(self, **kwargs):
@@ -203,10 +201,8 @@ class PID(object):
         if self.output is not None:
             self.output_offset = self.output
 
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
+        self.xbuffer.extend([0.] * self.xbuffer.maxlen)
+        self.ybuffer.extend([0.] * self.ybuffer.maxlen)
 
 class PIID(object):
     def __init__(self, **kwargs):
@@ -315,10 +311,8 @@ class PIID(object):
         if self.output is not None:
             self.output_offset = self.output
 
-        for x in self.xbuffer:
-            x = 0
-        for y in self.ybuffer:
-            y = 0
+        self.xbuffer.extend([0.] * self.xbuffer.maxlen)
+        self.ybuffer.extend([0.] * self.ybuffer.maxlen)
 
 
 class Dither(object):

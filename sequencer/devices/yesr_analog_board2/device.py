@@ -15,7 +15,7 @@ T_TRIGGER = 85.8993408 # [s]
 
 class YeSrAnalogBoard(YeSrSequencerBoard):
     sequencer_type = 'analog'
-    bitfilepath = 'ad669_sequencer.bit'
+    ok_bitfilename = 'ad669_sequencer.bit'
     clk = 100e6
     
     def update_channel_modes(self):
@@ -41,7 +41,7 @@ class YeSrAnalogBoard(YeSrSequencerBoard):
             channel.set_sequence(channel_sequence)
 
         t_bytes = []
-        v_bytes = [[]] * 8
+        v_bytes = [[] for _ in range(8)]
         
         for i, channel in enumerate(self.channels):
             for ramp in channel.programmable_sequence:
@@ -67,15 +67,9 @@ class YeSrAnalogBoard(YeSrSequencerBoard):
 
         self.fp.SetWireInValue(0, 0, 1)
         self.fp.UpdateWireIns()
-        self.fp.WriteToPipeIn(0x80, t_bytes)
-        self.fp.WriteToPipeIn(0x81, v_bytes[0])
-        self.fp.WriteToPipeIn(0x82, v_bytes[1])
-        self.fp.WriteToPipeIn(0x83, v_bytes[2])
-        self.fp.WriteToPipeIn(0x84, v_bytes[3])
-        self.fp.WriteToPipeIn(0x85, v_bytes[4])
-        self.fp.WriteToPipeIn(0x86, v_bytes[5])
-        self.fp.WriteToPipeIn(0x87, v_bytes[6])
-        self.fp.WriteToPipeIn(0x88, v_bytes[7])
+        self.fp.WriteToPipeIn(0x80, [bytes([x]) for x in t_bytes])
+        for i, cv_bytes in enumerate(v_bytes):
+            self.fp.WriteToPipeIn(0x81 + i, [bytes([x]) for x in cv_bytes])
         self.fp.SetWireInValue(0, 1, 1)
         self.fp.UpdateWireIns()
 

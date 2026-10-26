@@ -162,7 +162,7 @@ class DG4000(object):
     def ask_amplitude(self):
         command = 'SOUR{}:MOD:ASK:AMPL?'.format(self._source)
         ans = self._inst.ask(command)
-        return float(ans).amplit
+        return float(ans)
     
     @ask_amplitude.setter
     def ask_amplitude(self, ask_amp):

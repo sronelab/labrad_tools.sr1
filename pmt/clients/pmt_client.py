@@ -1,14 +1,14 @@
 import json
 import h5py
 import os
-from PyQt4 import QtGui, QtCore
+from PyQt6 import QtGui, QtCore, QtWidgets
 from twisted.internet.defer import inlineCallbacks, returnValue
 import numpy as np
 import matplotlib
-matplotlib.use('Qt4Agg')
+matplotlib.use('qtagg')
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
 from client_tools.connection import connection
@@ -24,7 +24,7 @@ class MplCanvas(FigureCanvas):
         FigureCanvas.__init__(self, self.fig)
         self.setFixedSize(600, 300)
 
-class PMTViewer(QtGui.QDialog):
+class PMTViewer(QtWidgets.QDialog):
     pmt_name = None
     data_dir = None
 
@@ -53,7 +53,7 @@ class PMTViewer(QtGui.QDialog):
         self.canvas = MplCanvas()
         self.nav = NavigationToolbar(self.canvas, self)
         
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
@@ -112,53 +112,53 @@ class PMTViewerNumeric(PMTViewer):
         self.setWindowTitle(self.pmt_name)
         self.canvas = MplCanvas()
         self.nav = NavigationToolbar(self.canvas, self)
-        self.lcdGND = QtGui.QLCDNumber(self)
+        self.lcdGND = QtWidgets.QLCDNumber(self)
         self.lcdGND.display('0.001')
-        self.lcdEXC = QtGui.QLCDNumber(self)
+        self.lcdEXC = QtWidgets.QLCDNumber(self)
         self.lcdEXC.display('0.001')
-        self.lcdBAC = QtGui.QLCDNumber(self)
+        self.lcdBAC = QtWidgets.QLCDNumber(self)
         self.lcdBAC.display('0.000')
-        self.lcdFRAC = QtGui.QLCDNumber(self)
+        self.lcdFRAC = QtWidgets.QLCDNumber(self)
         self.lcdFRAC.display('0.000')
-        self.lcdTOTAL = QtGui.QLCDNumber(self)
+        self.lcdTOTAL = QtWidgets.QLCDNumber(self)
         self.lcdTOTAL.display('0.000')
-        self.labelGND = QtGui.QLabel('GROUND')
-        self.labelGND.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelGND.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Bold))
-        self.labelEXC = QtGui.QLabel('EXCITED')
-        self.labelEXC.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelEXC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Bold))
-        self.labelBAC = QtGui.QLabel('BACKGROUND')
-        self.labelBAC.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelBAC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Bold))
-        self.labelFRAC = QtGui.QLabel('EXC. FRACTION')
-        self.labelFRAC.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelFRAC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Bold))
-        self.labelTOTAL = QtGui.QLabel('TOTAL')
-        self.labelTOTAL.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelTOTAL.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Bold))
+        self.labelGND = QtWidgets.QLabel('GROUND')
+        self.labelGND.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.labelGND.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Weight.Bold))
+        self.labelEXC = QtWidgets.QLabel('EXCITED')
+        self.labelEXC.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.labelEXC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Weight.Bold))
+        self.labelBAC = QtWidgets.QLabel('BACKGROUND')
+        self.labelBAC.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.labelBAC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Weight.Bold))
+        self.labelFRAC = QtWidgets.QLabel('EXC. FRACTION')
+        self.labelFRAC.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.labelFRAC.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Weight.Bold))
+        self.labelTOTAL = QtWidgets.QLabel('TOTAL')
+        self.labelTOTAL.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.labelTOTAL.setFont(QtGui.QFont("Arial", 48, QtGui.QFont.Weight.Bold))
 
          
-        self.layout = QtGui.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
         self.layout.setSpacing(1)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
         self.layout.addWidget(self.nav)
         self.layout.addWidget(self.canvas)
         
-        self.hboxFRAC = QtGui.QHBoxLayout()
+        self.hboxFRAC = QtWidgets.QHBoxLayout()
         self.hboxFRAC.addWidget(self.labelFRAC)
         self.hboxFRAC.addWidget(self.lcdFRAC)        
-        self.hboxGND = QtGui.QHBoxLayout()
+        self.hboxGND = QtWidgets.QHBoxLayout()
         self.hboxGND.addWidget(self.labelGND)
         self.hboxGND.addWidget(self.lcdGND)
-        self.hboxEXC = QtGui.QHBoxLayout()
+        self.hboxEXC = QtWidgets.QHBoxLayout()
         self.hboxEXC.addWidget(self.labelEXC)
         self.hboxEXC.addWidget(self.lcdEXC)
-        self.hboxBAC = QtGui.QHBoxLayout()
+        self.hboxBAC = QtWidgets.QHBoxLayout()
         self.hboxBAC.addWidget(self.labelBAC)
         self.hboxBAC.addWidget(self.lcdBAC)
-        self.hboxTOTAL = QtGui.QHBoxLayout()
+        self.hboxTOTAL = QtWidgets.QHBoxLayout()
         self.hboxTOTAL.addWidget(self.labelTOTAL)
         self.hboxTOTAL.addWidget(self.lcdTOTAL)
         

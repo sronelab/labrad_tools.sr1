@@ -111,4 +111,4 @@ class YeSrDigitalBoard(YeSrSequencerBoard):
             #         for i in range(0, 32, 8)])
             sequence_bytes += [(t >> i) & 0xff for i in range(0, 32, 8)]
         sequence_bytes += [0] * 12
-        return [chr(x) for x in sequence_bytes]
+        return [bytes([x]) for x in sequence_bytes]

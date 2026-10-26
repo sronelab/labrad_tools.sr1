@@ -10,7 +10,7 @@ class Serial(object):
     def __init__(self, serial_server, comport):
         self.serial_server = serial_server
         self.comport = comport
-        self.serial_server.reopen_interface(self.comport)
+        self.serial_server.open_interface(self.comport)
 
     @property
     def baudrate(self):

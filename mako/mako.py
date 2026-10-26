@@ -964,7 +964,7 @@ class MakoLattice():
         camera.log_message.connect(gui.show_log)
 
         def cleanup():
-            print(f"Starting cleanup {info["title"]}...")
+            print(f"Starting cleanup {info['title']}...")
             camera.stop_camera()
             
             thread.quit()

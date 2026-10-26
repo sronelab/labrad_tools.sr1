@@ -13,14 +13,19 @@ class ClientConfig(object):
 
 if __name__ == '__main__':
     import sys
-    from PyQt4 import QtGui
-    a = QtGui.QApplication([])
-    import client_tools.qt4reactor as qt4reactor
-    qt4reactor.install()
+    from PyQt6 import QtWidgets
+    a = QtWidgets.QApplication([])
+    import asyncio
+    import qasync
+    from twisted.internet import asyncioreactor
+    loop = qasync.QEventLoop(a)
+    asyncio.set_event_loop(loop)
+    asyncioreactor.install(loop)
     from twisted.internet import reactor
     from picomotor.clients.picomotor_client import MultiplePicomotorClient
     mirrors = [('h1_x', 'h1_y'), ('h2_x', 'h2_y'), ('h1_xr', 'h1_yr'), ('h2_xr', 'h2_yr'), ('v_x', 'v_y')]
     configs = [[ClientConfig(axis) for axis in mirror] for mirror in mirrors]
     widget = MultiplePicomotorClient(configs, reactor)
     widget.show()
-    reactor.run()
+    with loop:
+        reactor.run()

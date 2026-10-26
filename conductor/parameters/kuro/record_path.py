@@ -75,6 +75,7 @@ class RecordPath(ConductorParameter):
         sequence = self.server.parameters.get('sequencer.sequence')
 
         value = None
+        rel_point_path = None
         if (experiment_name is not None) and (sequence is not None):
             point_filename = self.data_filename.format(shot_number)
             rel_point_path = os.path.join(experiment_name, point_filename)
@@ -90,12 +91,13 @@ class RecordPath(ConductorParameter):
 
     def update(self):
         value = self.value
+        # capture now: call_in_thread=True, so the experiment may advance during Acquire
+        shotnumber = self.server.experiment.get('shot_number')
+        experiment_name = self.server.experiment.get('name')
         if value is not None:
             tot, frac = self.take_fluorescence_image_2D(value)
 
             # send data to the proxy instance.
-            shotnumber = self.server.experiment.get('shot_number')
-            experiment_name = self.server.experiment.get('name')
             point_filename = "{}_{}".format(experiment_name, shotnumber)
             self.kuro.update_records(point_filename, frac, tot)
 
@@ -129,7 +131,7 @@ class RecordPath(ConductorParameter):
                 frac = 0
             else:
                 frac = e / tot
-            return tot, frac
+            return float(tot), float(frac)
         else:
             return 0, 0
     

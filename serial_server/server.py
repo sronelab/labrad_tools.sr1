@@ -15,6 +15,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+import threading
+
 from serial import Serial
 import serial.tools.list_ports
 from labrad.server import setting
@@ -26,13 +28,21 @@ from hardware_interface_server.exceptions import InterfaceNotAvailable
 class SerialServer(HardwareInterfaceServer):
     """Provides access to conputer's serial interface """
     name = '%LABRADNODE%_serial'
-    
+
+    def initServer(self):
+        self.locks = {}
+        super(SerialServer, self).initServer()
+
+    def _get_lock(self, interface_id):
+        # one lock per port so concurrent (threaded) settings don't interleave I/O
+        return self.locks.setdefault(interface_id, threading.RLock())
+
     def _get_available_interfaces(self):
         available_interfaces = [cp[0] for cp in serial.tools.list_ports.comports()]
         return available_interfaces
 
     def _get_open_interfaces(self):
-        for interface_id, interface in self.interfaces.items():
+        for interface_id, interface in list(self.interfaces.items()):
             try:
                 is_open = interface.isOpen()
                 if not is_open:
@@ -43,20 +53,26 @@ class SerialServer(HardwareInterfaceServer):
         return list(self.interfaces.keys())
 
     def _open_interface(self, interface_id):
-        open_interfaces = self._get_open_interfaces()
-        if interface_id in open_interfaces:
-            return
-#            raise InterfaceAlreadyOpen(interface_id)
-        try:
-            ser = Serial(interface_id)
-        except:
-            raise InterfaceNotAvailable(interface_id)
-        self.interfaces[interface_id] = ser
-    
+        with self._get_lock(interface_id):
+            open_interfaces = self._get_open_interfaces()
+            if interface_id in open_interfaces:
+                return
+#                raise InterfaceAlreadyOpen(interface_id)
+            try:
+                ser = Serial(interface_id)
+            except:
+                raise InterfaceNotAvailable(interface_id)
+            self.interfaces[interface_id] = ser
+
     def _close_interface(self, interface_id):
-        interface = self._get_interface(interface_id)
-        interface.close()
-        del self.interfaces[interface_id]
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            interface.close()
+            del self.interfaces[interface_id]
+
+    def _reopen_interface(self, interface_id):
+        with self._get_lock(interface_id):
+            super(SerialServer, self)._reopen_interface(interface_id)
         
     @setting(10, interface_id='s')
     def baudrate(self, c, interface_id, baudrate=None):
@@ -88,26 +104,32 @@ class SerialServer(HardwareInterfaceServer):
     
     @setting(14, interface_id='s', size='i')
     def read(self, c, interface_id, size=1):
-        interface = self._get_interface(interface_id)
-        result = interface.read(size)
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            result = interface.read(size)
         return result
-    
+
     @setting(15, interface_id='s', expected='s', size='i')
     def read_until(self, c, interface_id, expected='\n', size=None):
-        interface = self._get_interface(interface_id)
-        result = interface.read_until(expected, size)
+        if isinstance(expected, str):
+            expected = expected.encode()
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            result = interface.read_until(expected, size)
         return result
-    
+
     @setting(16, interface_id='s', size='i')
     def readline(self, c, interface_id, size=-1):
-        interface = self._get_interface(interface_id)
-        result = interface.readline()
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            result = interface.readline()
         return result
-    
+
     @setting(17, interface_id='s', size='i')
     def readlines(self, c, interface_id, size=-1):
-        interface = self._get_interface(interface_id)
-        result = interface.readlines(size)
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            result = interface.readlines(size)
         return result
 
     
@@ -132,16 +154,20 @@ class SerialServer(HardwareInterfaceServer):
             interface.timeout = timeout
         return interface.timeout
     
-    @setting(21, interface_id='s')
+    @setting(21, interface_id='s', data=['y', 's'])
     def write(self, c, interface_id, data):
-        interface = self._get_interface(interface_id)
-        num_bytes = interface.write(data)
+        if isinstance(data, str):
+            data = data.encode('latin-1') # pyserial needs bytes; latin-1 keeps chr(0-255) as one byte
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            num_bytes = interface.write(data)
         return num_bytes
 
     @setting(22, interface_id='s')
     def writelines(self, c, interface_id, data):
-        interface = self._get_interface(interface_id)
-        interface.writelines(data)
+        with self._get_lock(interface_id):
+            interface = self._get_interface(interface_id)
+            interface.writelines(data)
 
 Server = SerialServer
 

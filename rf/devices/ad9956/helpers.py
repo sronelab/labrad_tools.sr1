@@ -5,4 +5,4 @@ def get_instruction_set(address, register, data):
     lowest_byte = ins_sum_bin[-8:]
     checksum = int('0b'+str(lowest_byte), 0)
     ins.append(checksum)
-    return [chr(i) for i in ins]
+    return [bytes([i]) for i in ins]

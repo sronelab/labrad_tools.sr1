@@ -20,6 +20,7 @@ Provides access to Keysight 34470A multimeters.
 """
 
 import sys
+import threading
 from datetime import datetime
 from labrad.server import LabradServer, setting
 from twisted.internet.reactor import callInThread
@@ -38,6 +39,7 @@ class keysight34470aServer(LabradServer):
     
     def initServer(self):
         self.inst = vxi11.Instrument(self.sesame_street_ip)
+        self.inst_lock = threading.Lock() # record runs in a thread; settings run on the reactor
         # set trigger mode
         # self.inst.write('*RST\n')
         # self.inst.write('TRIG:SOUR EXT\n')
@@ -64,7 +66,8 @@ class keysight34470aServer(LabradServer):
         # self.inst.write('SENS:VOLT:DC:NPLC {}\n'.format(NPLC))
         try:
             # self.inst.write('INIT')
-            data = self.inst.ask("READ?\n")
+            with self.inst_lock:
+                data = self.inst.ask("READ?\n")
         except:
             data = "0.0"
 
@@ -75,7 +78,8 @@ class keysight34470aServer(LabradServer):
         # self.inst.write('SENS:VOLT:DC:NPLC {}\n'.format(NPLC))
         try:
             # self.inst.write('INIT')
-            data = float(self.inst.ask("READ?\n"))
+            with self.inst_lock:
+                data = float(self.inst.ask("READ?\n"))
         except:
             data = "NODATA"
 
@@ -86,14 +90,15 @@ class keysight34470aServer(LabradServer):
         self.recording_name = rel_data_path
         if self.recording:
             raise Exception('already recording')
-        # callInThread(self.do_record_data, rel_data_path)
-        else:
-            self.do_record_data(rel_data_path)  
+        # READ? blocks until the external trigger, so keep it off the reactor thread
+        self.recording = True
+        callInThread(self.do_record_data, rel_data_path)
 
     def do_record_data(self, rel_data_path):
-        self.recording = True
-        data = self._read_voltage(self._get_NPLC())
-        self.recording = False
+        try:
+            data = self._read_voltage(self._get_NPLC())
+        finally:
+            self.recording = False
         processed_data = {"voltage":data}
 
         abs_data_dir = os.path.join(self.data_path, os.path.dirname(rel_data_path))
@@ -118,9 +123,10 @@ class keysight34470aServer(LabradServer):
 
     @setting(21)
     def prepare_multimeter(self, c):
-        self.inst.write('*RST')
-        self.inst.write('TRIG:SOUR EXT;SLOP POS')
-        self.inst.write('CONF:VOLT:DC 1') 
+        with self.inst_lock:
+            self.inst.write('*RST')
+            self.inst.write('TRIG:SOUR EXT;SLOP POS')
+            self.inst.write('CONF:VOLT:DC 1')
         
 
 if __name__ == '__main__':

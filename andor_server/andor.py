@@ -135,7 +135,7 @@ class Andor(object):
         Returns:
             (array) image.
         """
-        arr = (ctypes.c_int * size)()
+        arr = (ctypes.c_uint16 * size)()
         error = self.dll.GetAcquiredData16(ctypes.pointer(arr), size)
         self._log(sys._getframe().f_code.co_name, error)
         img = np.array(arr, dtype=np.uint16)
@@ -204,7 +204,7 @@ class Andor(object):
             (int) total number of cameras currently installed
         """
         totalCameras = ctypes.c_long()
-        error = self.dll.GetAvailableCameras(totalCameras)
+        error = self.dll.GetAvailableCameras(ctypes.byref(totalCameras))
         self._log(sys._getframe().f_code.co_name, error)
         return totalCameras.value
 
@@ -471,7 +471,7 @@ class Andor(object):
         readout speeds etc. If your system has multiple cameras then see the
         section controlling multiple cameras.
         """
-        error = self.dll.Initialize(self.initdir)
+        error = self.dll.Initialize(self.initdir.encode())
         self._log(sys._getframe().f_code.co_name, error)
         return self.initdir
         

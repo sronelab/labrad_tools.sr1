@@ -10,6 +10,10 @@ from conductor.exceptions import ParameterGetValueError
 from conductor.exceptions import ParameterAdvanceError
 from conductor.exceptions import ParameterUpdateError
 
+def _is_iterable(value):
+    # py2 str had no __iter__; py3 str does, which turned string values into scans
+    return hasattr(value, '__iter__') and not isinstance(value, (str, bytes))
+
 class ConductorParameter(object):
     """ Base class/template for conductor parameters
 
@@ -86,14 +90,14 @@ class ConductorParameter(object):
     def set_value(self, value):    
         """ set value, and value_queue if we want to scan parameter value """
         if self.value_type == 'single':
-            if hasattr(value, '__iter__'):
+            if _is_iterable(value):
                 self.value_queue = deque(value)
             else:
                 self.value_queue = deque()
                 self.value = value
 
         elif self.value_type == 'list':
-            if not hasattr(value, '__iter__'):
+            if not _is_iterable(value):
                 self.value = value
 #                message = (
 #                        "conductor parameter ({}) has value_type 'list'."
@@ -102,7 +106,7 @@ class ConductorParameter(object):
 #                        )
 #                raise Exception(message)
             elif len(value) > 1:
-                if hasattr(value[0], '__iter__'):
+                if _is_iterable(value[0]):
                     self.value_queue = deque(value)
                 else:
                     self.value_queue = deque()

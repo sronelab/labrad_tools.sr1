@@ -102,8 +102,9 @@ class KuroCamera:
     
     def SetExposureTime(self, exposure_time: float):
         """Set exposure time"""
-        self.picam.SetParameterFloatingPointValue(self.camera, PicamParameter.ExposureTime, exposure_time)
-    
+        if self.picam.SetParameterFloatingPointValue(self.camera, PicamParameter.ExposureTime, exposure_time):
+            self.param["exposure_time"] = exposure_time
+
     def GetExposureTime(self) -> float:
         """Get exposure time"""
         return self.picam.GetParameterFloatingPointValue(self.camera, PicamParameter.ExposureTime)
@@ -175,8 +176,9 @@ class KuroCamera:
         roi = create_roi(x, y, width, height, x_binning, y_binning)
         rois = PicamRois(ctypes.pointer(roi), 1)
         
-        self.picam.SetParameterRoisValue(self.camera, PicamParameter.Rois, rois)
-    
+        if self.picam.SetParameterRoisValue(self.camera, PicamParameter.Rois, rois):
+            self.param.update({"ROI_x": x, "ROI_y": y, "ROI_width": width, "ROI_height": height})
+
     def GetROI(self, is_print=True) -> PicamRois:
         """Get region of interest"""
         rois = self.picam.GetParameterRoisValue(self.camera, PicamParameter.Rois)
@@ -291,7 +293,7 @@ class KuroCamera:
         image = np.ctypeslib.as_array(ptr, shape=(count*self.param["ROI_height"]*self.param["ROI_width"],))
         print("Acquired readout count: {}".format(count))
         print("Sensor Temperature: {}".format(self.GetSensorTemperatureReading()))
-        return count, image
+        return count, np.array(image,dtype=np.uint32)
     
     def SaveData(self, count: int, image: np.ndarray, save_path: str):
         image = np.array(image, dtype=np.uint16).reshape((count,self.param["ROI_height"],self.param["ROI_width"]))

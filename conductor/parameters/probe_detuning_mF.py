@@ -10,7 +10,7 @@ class ProbeDetuningMF(ConductorParameter):
 
 #Normally must initialize for first shot
 
-    priority = 4
+    priority = 4.5 # after follow_lock (5), before the clock_mF.hr_demod_* DDS it writes (4)
     autostart = False
 
     # memory for the frequency values
@@ -92,8 +92,8 @@ class ProbeDetuningMF(ConductorParameter):
                 self.value=mF_value
                 print(' Top Clock Center Frequency: ' + str(mF_value))
 
-            request = {'probe_detuning_mF': float(mF_value)}
-            self.server._set_parameter_values(request)
+            # set directly: _set_parameter_values on itself would clear its own scan queue
+            self.value = float(mF_value)
 
             f_vco = 155.504e6/2.0
 

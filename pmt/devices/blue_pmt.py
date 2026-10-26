@@ -71,22 +71,24 @@ class BluePMT(Picoscope):
         self.recording_name = rel_data_path
         if self.recording:
             raise Exception('already recording')
-        callInThread(self.do_record_data, rel_data_path)
-    
-    def do_record_data(self, rel_data_path):
         self.recording = True
-        self.ps.runBlock()
-        self.ps.waitReady()
+        callInThread(self.do_record_data, rel_data_path)
 
-        data = {}
-        for channel, segments in self.data_format.items():
-            data[channel] = {}
-            for label, i in segments.items():
-#                data[channel][label] = self.ps.getDataV(channel, 50000, 
-#                                                        segmentIndex=i)
-                data[channel][label] = self.ps.getDataV(channel, self.n_samples,
-                                                        segmentIndex=i)
-        self.recording = False
+    def do_record_data(self, rel_data_path):
+        try:
+            self.ps.runBlock()
+            self.ps.waitReady()
+
+            data = {}
+            for channel, segments in self.data_format.items():
+                data[channel] = {}
+                for label, i in segments.items():
+#                    data[channel][label] = self.ps.getDataV(channel, 50000,
+#                                                            segmentIndex=i)
+                    data[channel][label] = self.ps.getDataV(channel, self.n_samples,
+                                                            segmentIndex=i)
+        finally:
+            self.recording = False
 
         raw_data = data['A']
         raw_sums = {label: sum(raw_counts) for label, raw_counts in raw_data.items()}

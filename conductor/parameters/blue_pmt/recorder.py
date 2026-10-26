@@ -50,11 +50,13 @@ class Recorder(ConductorParameter):
             rel_point_path = os.path.join(experiment_name, point_filename)
         elif sequence is not None:
             rel_point_path = self.nondata_filename.format(time.strftime('%Y%m%d'))
-            
+        else:
+            return value
+
         if sequence.loop:
-            if np.intersect1d(previous_sequence.value, self.record_sequences):
+            if previous_sequence is not None and np.intersect1d(previous_sequence.value, self.record_sequences).size > 0:
                 value = rel_point_path
-        elif np.intersect1d(sequence.value, self.record_sequences):
+        elif np.intersect1d(sequence.value, self.record_sequences).size > 0:
             value = rel_point_path
 
         return value

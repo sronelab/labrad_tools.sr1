@@ -1,5 +1,6 @@
 from conductor.parameter import ConductorParameter
 import json
+import threading
 
 defult_value = {
     "ch1_mean": 0,
@@ -22,16 +23,15 @@ class Rigol(ConductorParameter):
             'scope1': defult_value,
             'scope2': defult_value,
             }
-        self.is_running = False
+        self.running_lock = threading.Lock()
 
     def update(self):
         if self.value is not None:
-            if not self.is_running:
-                self.is_running = True
+            if self.running_lock.acquire(blocking=False):
                 try:
                     self.value = json.loads(self.cxn.yezoe_rigol.acquire_data())
                 finally:
-                    self.is_running = False
+                    self.running_lock.release()
             else:
                 self.value = {
                 'scope1': defult_value,

@@ -11,7 +11,7 @@ class KuroProxy(object):
         self.kuro_server.Disconnect()
 
     def Reconnect(self):
-        self.kurokuro_server.Reconnect()
+        self.kuro_server.Reconnect()
     
     def SetExposureTime(self, exposure_time):
         self.kuro_server.SetExposureTime(exposure_time)

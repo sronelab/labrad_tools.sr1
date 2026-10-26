@@ -18,7 +18,7 @@ class NewPlot(ConductorParameter):
     
     def update(self):
         try:
-            data_copy = self.server._get_parameter_values("{}",True)
+            data_copy = self.server._get_parameter_values({}, True)
             if self.value:
                 self.cxn.new_plotter.plot(json.dumps(self.value), 
                         json.dumps(data_copy, default=lambda x: None))

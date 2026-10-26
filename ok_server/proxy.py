@@ -23,8 +23,8 @@ class okCFrontPanelProxy(object):
     def IsTriggered(self, address):
         return self.ok_server.is_triggered(self.interface_id, address)
 
-    def SetWireInValue(self, address, value):
-        return self.ok_server.set_wire_in_value(self.interface_id, address, value)
+    def SetWireInValue(self, address, value, *mask):
+        return self.ok_server.set_wire_in_value(self.interface_id, address, value, *mask)
 
     def UpdateTriggerOuts(self):
         return self.ok_server.update_trigger_outs(self.interface_id)

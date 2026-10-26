@@ -76,4 +76,4 @@ class YeSrAnalogBoard(YeSrSequencerBoard):
         for (t, loc, ramp_bytes) in sorted_ramps:
             sequence_bytes += ramp_bytes
         sequence_bytes += [0] * 6
-        return [chr(x) for x in sequence_bytes]
+        return [bytes([x]) for x in sequence_bytes]

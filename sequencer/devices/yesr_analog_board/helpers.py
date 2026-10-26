@@ -14,6 +14,8 @@ def shift_bits(ticks):
     return int(np.log2(ticks)) + 2
 
 def get_ramp_bytes(bits, ticks):
+    if ticks <= 0:
+        raise ValueError('ramp duration rounds to {} clock ticks; segment too short'.format(ticks))
     shift = shift_bits(ticks)
     signed_ramp_rate = int((bits * 2**shift / ticks)) + 1
     rate_bits = '{:018b}'.format(signed_ramp_rate & 0b111111111111111111)

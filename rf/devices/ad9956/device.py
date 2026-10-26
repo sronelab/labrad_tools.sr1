@@ -72,7 +72,8 @@ class AD9956(DefaultDevice):
         self.ser = ser
 
         time.sleep(0.5)
-        reactor.callInThread(self.delayed_call, 5, self.set_frequency, self.default_frequency)
+        self.written = False
+        reactor.callInThread(self.delayed_call, 5, self.set_default_frequency)
 
         # Setting a sinlge frequency manually for debugging
         # reactor.callInThread(self.delayed_call, 5, self.set_frequency, 150e6, 0, "high")
@@ -81,6 +82,11 @@ class AD9956(DefaultDevice):
     def delayed_call(self, delay, func, *args):
         time.sleep(delay)
         func(*args)
+
+    def set_default_frequency(self):
+        # skip if a frequency/ramp was written after (re)initialize, so a reload doesn't clobber it
+        if not self.written:
+            self.set_frequency(self.default_frequency)
 
     def make_cfr1w(self, mode):
         """ make control function register 1 word
@@ -214,8 +220,9 @@ class AD9956(DefaultDevice):
                 + get_instruction_set(self.board_num, self.flow_reg, ftw_start)
                 + get_instruction_set(self.board_num, self.fhigh_reg, ftw_stop)
                 )
-            command = ''.join(instruction_set)
+            command = b''.join(instruction_set)
             self.ser.write(command)
+            self.written = True
 #            self.serial_server.write(self.serial_address, command)
         else:
             message = "End frequency must be greater than start frequency in current set up."
@@ -270,8 +277,9 @@ class AD9956(DefaultDevice):
                 get_instruction_set(board, self.cfr1_reg, cfr1w)
                 + get_instruction_set(board, self.extra_regs[output], ftw)
                 )
-        command = ''.join(instruction_set)
+        command = b''.join(instruction_set)
         self.ser.write(command)
+        self.written = True
 #        self.serial_server.write(self.serial_address, command)
 
         if output == 'low':
@@ -306,8 +314,9 @@ class AD9956(DefaultDevice):
                 + get_instruction_set(self.board_num, self.rsrr_reg, rsrr)
                 + get_instruction_set(self.board_num, self.fsrr_reg, fsrr)
             )
-            command = ''.join(instruction_set)
+            command = b''.join(instruction_set)
             self.ser.write(command)
+            self.written = True
         else:
             message = "ramp rate out of range"
             raise Exception(message)

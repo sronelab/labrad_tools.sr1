@@ -29,6 +29,7 @@ import gc
 import io
 import os
 import sys
+import threading
 import weakref
 from collections import OrderedDict, deque
 from time import time
@@ -124,6 +125,7 @@ class PlotterServer(ThreadedServer):
 
         # Initialize plot request queue (maxlen=1 keeps only latest request)
         self._plot_queue = deque(maxlen=1)
+        self._plot_lock = threading.Lock()
 
     def stopServer(self):
         """socket server"""
@@ -134,29 +136,31 @@ class PlotterServer(ThreadedServer):
     def _get_cached_module(self, path, function_name):
         """Get module from cache or load and cache it."""
         cache_key = (path, function_name)
+        mtime = os.path.getmtime(path)
 
-        # Check if module is in cache
+        # Check if module is in cache and the file is unchanged since it was loaded
         if cache_key in self._module_cache:
             # Move to end (most recently used)
-            module = self._module_cache.pop(cache_key)
-            self._module_cache[cache_key] = module
-            return module
+            module, cached_mtime = self._module_cache.pop(cache_key)
+            if cached_mtime == mtime:
+                self._module_cache[cache_key] = (module, mtime)
+                return module
 
         # Load new module
         try:
-            module_name = os.path.split(path)[-1].strip(".py")
+            module_name = os.path.splitext(os.path.basename(path))[0]
             spec = importlib.util.spec_from_file_location(module_name, path)
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
 
             # Add to cache
-            self._module_cache[cache_key] = module
+            self._module_cache[cache_key] = (module, mtime)
 
             # Remove oldest if cache is full
             if len(self._module_cache) > MODULE_CACHE_SIZE:
                 oldest_key = next(iter(self._module_cache))
-                old_module = self._module_cache.pop(oldest_key)
+                old_module = self._module_cache.pop(oldest_key)[0]
                 # Clean up old module references
                 if (
                     hasattr(old_module, "__name__")
@@ -183,18 +187,20 @@ class PlotterServer(ThreadedServer):
         self._plot_queue.append(settings)
 
         # Start processing queue if not currently plotting
+        # plot() runs on a worker thread; reactor calls must go through callFromThread
         if not self.is_plotting:
-            reactor.callLater(0, reactor.callInThread, self._plot_with_queue)
+            reactor.callFromThread(reactor.callInThread, self._plot_with_queue)
 
     def _plot_with_queue(self):
         """Process queued plot requests until queue is empty."""
-        if self._plot_queue and not self.is_plotting:
-            try:
+        while True:
+            with self._plot_lock:
+                if self.is_plotting or not self._plot_queue:
+                    return
+                self.is_plotting = True
                 settings = self._plot_queue.popleft()
-                self._plot(settings)
-            except IndexError:
-                # Queue became empty between check and popleft
-                pass
+            try:
+                self._plot(settings)  # resets is_plotting when done
             except Exception as e:
                 print("Error processing queued plot: {0}".format(e))
 

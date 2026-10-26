@@ -15,14 +15,16 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from labrad.server import LabradServer, setting
+from labrad.server import setting
+from server_tools.threaded_server import ThreadedServer
 from Picam import PicamCameraID, PicamModel, PicamComputerInterface
 from Kuro import KuroCamera
 from collections import deque
 import json
 import atexit
+import threading
 
-class KuroServer(LabradServer):
+class KuroServer(ThreadedServer):
     camera_id = PicamCameraID()
     camera_id.model = PicamModel.Kuro1200B.value
     camera_id.computer_interface = PicamComputerInterface.Usb3.value
@@ -39,6 +41,17 @@ class KuroServer(LabradServer):
     # for the clock servo. stroing recent 100 data with its filenames.
     name = '%LABRADNODE%_kuro'
     max_records = 100
+    # settings run in worker threads; serialize SDK access except calls meant to interrupt Acquire
+    _lock = threading.Lock()
+    _unlocked_settings = ("StopAcquisition", "IsAcquisitionRunning")
+
+    def _dispatch(self, func, *args, **kw):
+        if getattr(getattr(func, "__self__", None), "name", None) in self._unlocked_settings:
+            return super(KuroServer, self)._dispatch(func, *args, **kw)
+        def locked(*a, **k):
+            with self._lock:
+                return func(*a, **k)
+        return super(KuroServer, self)._dispatch(locked, *args, **kw)
 
     def initServer(self):
         self.records = deque(maxlen=self.max_records)
@@ -83,7 +96,7 @@ class KuroServer(LabradServer):
     def SetTriggerResponse(self, c, trigger_response):
         self.kuro.SetTriggerResponse(trigger_response)
 
-    @setting(7, returns="i")
+    @setting(7, returns="s")
     def GetTriggerResponse(self, c):
         return self.kuro.GetTriggerResponse()
     

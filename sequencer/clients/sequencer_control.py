@@ -234,7 +234,8 @@ class SequencerClient(QtWidgets.QWidget):
 
         self.loadAndSave.saveButton.clicked.connect(self.saveSequence)
         self.loadAndSave.loadButton.clicked.connect(self.browse)
-        self.loadAndSave.locationBox.returnPressed.connect(self.loadSequence)
+        self.loadAndSave.locationBox.returnPressed.connect(
+            lambda: self.loadSequence(self.loadAndSave.locationBox.text()))
 
         for i, b in enumerate(self.addDltRow.buttons):
             b.add.clicked.connect(self.addColumn(i))
@@ -404,10 +405,11 @@ class SequencerClient(QtWidgets.QWidget):
                 if ave.exec():
                     sequence = ave.getEditedSequence().copy()
                     self.displaySequence(sequence)
-                    conductor = yield self.cxn.get_server(self.conductor_servername)
-                    yield conductor.signal__update(ave.conductor_update_id)
-                    yield conductor.removeListener(listener=ave.receive_conductor_update, 
-                                                   source=None, ID=ave.conductor_update_id)
+                # editor shares this client's cxn/context, so no signal__update() unsubscribe here:
+                # it would also cancel this client's own conductor subscription
+                conductor = yield self.cxn.get_server(self.conductor_servername)
+                yield conductor.removeListener(listener=ave.receive_conductor_update, 
+                                               source=None, ID=ave.conductor_update_id)
         return oanc
 
     @inlineCallbacks

@@ -121,7 +121,9 @@ class DitherPoint(ConductorParameter):
                 print("{} probe frequency: {}".format(name, output))
 
         
-        if self.server._get_parameter_value('andor.record_path'):
+        # only look at an already-active record_path; a lookup would start it
+        record_path = self.server.parameters.get('andor.record_path')
+        if record_path is not None and record_path._get_value():
             self.value_log.append(self.value)
             self.shot_number_log.append(self.server.experiment.get('shot_number'))
 

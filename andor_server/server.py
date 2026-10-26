@@ -15,18 +15,32 @@ message = 987654321
 timeout = 5
 ### END NODE INFO
 """
-from labrad.server import LabradServer, setting
+from labrad.server import setting
+from server_tools.threaded_server import ThreadedServer
 
 from andor_server.andor import Andor
 from collections import deque
 import json
+import threading
 
-class AndorServer(LabradServer):
+class AndorServer(ThreadedServer):
     """ Provides access to andor camera using pyandor """
     name = '%LABRADNODE%_andor'
 
     # for the clock servo. stroing recent 100 data with its filenames.
     max_records = 100
+    # settings run in worker threads; serialize SDK access, but never hold the lock
+    # across a wait so cancel_wait/abort_acquisition can run meanwhile
+    _lock = threading.Lock()
+    _unlocked_settings = ("wait_for_acquisition", "wait_for_acquisition_timeout")
+
+    def _dispatch(self, func, *args, **kw):
+        if getattr(getattr(func, "__self__", None), "name", None) in self._unlocked_settings:
+            return super(AndorServer, self)._dispatch(func, *args, **kw)
+        def locked(*a, **k):
+            with self._lock:
+                return func(*a, **k)
+        return super(AndorServer, self)._dispatch(locked, *args, **kw)
 
     def initServer(self):
         self.records = deque(maxlen=self.max_records)
@@ -180,7 +194,7 @@ class AndorServer(LabradServer):
 
     @setting(28, serial='i', returns='ii')
     def get_number_ad_channels(self, c, serial):
-        self.set_serial(serial)
+        self._set_serial(serial)
         channels = andor.GetNumberADChannels()
         error_code = andor.error['GetNumberADChannels']
         return error_code, channels

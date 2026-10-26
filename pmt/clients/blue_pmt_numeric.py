@@ -10,12 +10,17 @@ class MyViewer(PMTViewerNumeric):
     data_dir = os.path.join(os.getenv('PROJECT_DATA_PATH'), 'data')
 
 if __name__ == '__main__':
-    from PyQt4 import QtGui
-    a = QtGui.QApplication([])
+    from PyQt6 import QtGui, QtWidgets
+    a = QtWidgets.QApplication([])
     a.setWindowIcon(QtGui.QIcon('icon.png'))
-    import client_tools.qt4reactor as qt4reactor
-    qt4reactor.install()
+    import asyncio
+    import qasync
+    from twisted.internet import asyncioreactor
+    loop = qasync.QEventLoop(a)
+    asyncio.set_event_loop(loop)
+    asyncioreactor.install(loop)
     from twisted.internet import reactor
     widget = MyViewer(reactor)
     widget.show()
-    reactor.run()
+    with loop:
+        reactor.run()
