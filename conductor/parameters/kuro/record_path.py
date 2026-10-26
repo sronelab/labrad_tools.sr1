@@ -17,7 +17,7 @@ from update.proxy import UpdateProxy
 class RecordPath(ConductorParameter):
     name = "Kuro"
     autostart = False
-    priority = 2
+    priority = 8
     call_in_thread = True
 
     data_filename = '{}.kuro.json'

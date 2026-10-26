@@ -103,7 +103,7 @@ class ConductorServer(ThreadedServer):
     experiment_directory = os.path.join(os.getenv('PROJECT_LABRAD_TOOLS_PATH'), name, '.experiments/')
 
     is_advancing = False
-    verbose = True
+    verbose = False
 
     def initServer(self):
         self.parameters = {}
